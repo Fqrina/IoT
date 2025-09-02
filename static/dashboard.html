@@ -100,6 +100,43 @@
             setInterval(loadPrediction, 30000);
         </script>
 
+        <script>
+            // Override: show newest on the right and format prediction nicely
+            async function refreshChartAndPrediction() {
+                try {
+                    const res = await fetch('/api/data');
+                    const rows = await res.json();
+                    const ordered = rows.slice().reverse();
+                    chart.data.labels = ordered.map(r => new Date(r.ts*1000).toLocaleTimeString());
+                    chart.data.datasets[0].data = ordered.map(r => r.voltage);
+                    chart.update();
+                } catch (e) { /* noop */ }
+
+                try {
+                    const res = await fetch('/api/prediction/latest');
+                    const js = await res.json();
+                    const box = document.getElementById('pred');
+                    if(!js.ok) { box.textContent = js.error || 'No prediction'; return; }
+                    if(js.data){
+                        const d = js.data;
+                        box.textContent = `description = ${d.description}; next voltage = ${d.next_voltage}; confidence = ${d.confidence}`;
+                    } else {
+                        box.textContent = js.text;
+                    }
+                } catch (e) { /* noop */ }
+            }
+
+            // Override askPrediction to also refresh formatted output
+            window.askPrediction = async function(){
+                await fetch('/get/response');
+                await refreshChartAndPrediction();
+            }
+
+            // Kick off our formatted refresh loop
+            refreshChartAndPrediction();
+            setInterval(refreshChartAndPrediction, 30000);
+        </script>
+
         <!-- Icon Navigation Grid -->
         <nav id="icon-navigation" class="grid grid-cols-5 gap-4 text-center mb-8">
             <div id="icon-recommendations">

@@ -17,9 +17,8 @@ Repositori ini berisi source code backend (REST API) untuk proyek IoT berbasis E
 - Install dependency: `pip install -r requirements.txt`
 - (Opsional) Set kunci Gemini jika ingin fitur AI:
   - Windows: `set GEMINI_API_KEY=your_key_here`
-  - macOS/Linux: `export GEMINI_API_KEY=your_key_here`
-- Jalankan server: `uvicorn app:app --reload`
-- Akses: `http://localhost:8000/`
+- Jalankan server: `uvicorn app:app --reload --port 5000`
+- Akses: `http://127.0.0.1:5000`
 
 ## Endpoint Utama
 - `POST /esp32` — ESP32 mengirim data sensor: `{ "voltage": 3.7, "temp": 28.5, "humid": 60.2, "ts": 1717290000 }`

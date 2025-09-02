@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoltStream Dashboard</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Chart.js (required for the chart below) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom styles for the app's dark theme */
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom gradient for the energy card */
+        .energy-gradient {
+            background: linear-gradient(135deg, #6c47ff, #b55cff);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 lg:p-12">
+    <!-- Main container for the dashboard content, centered for laptop screens -->
+    <div id="main-container" class="max-w-4xl mx-auto">
+        
+        <!-- Header Section -->
+        <header id="header" class="flex items-center justify-between mb-8">
+            <div id="header-text-container" class="flex flex-col">
+                <span id="welcome-message" class="text-sm text-gray-400">Selamat datang</span>
+                <h1 id="app-name" class="text-2xl font-bold">VoltStream</h1>
+                <p id="government-name" class="text-sm text-gray-300">Pemerintah Daerah Provinsi Jakarta</p>
+            </div>
+            <div id="profile-icon-container" class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center">
+                <!-- Placeholder for a user profile icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                </svg>
+            </div>
+        </header>
+
+        <!-- Energy Summary Card -->
+        <section id="energy-summary-card" class="energy-gradient rounded-xl p-6 shadow-lg mb-8">
+            <div class="flex flex-col mb-4">
+                <h2 id="total-wattage" class="text-4xl font-bold mb-2">50232 <span class="text-lg font-normal">Watt</span></h2>
+                <span id="energy-generated" class="text-gray-200">Energi yang dihasilkan</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex flex-col">
+                    <span id="average-wattage" class="text-3xl font-bold mb-1">1.521 <span class="text-lg font-normal">Watt</span></span>
+                    <span id="average-description" class="text-gray-200">Rata-rata energi yang dihasilkan perhari</span>
+                </div>
+                <div id="location-info" class="text-right">
+                    <p>Jakarta</p>
+                    <p>Jakarta Timur</p>
+                </div>
+            </div>
+        </section>
+
+        <p><button onclick="askPrediction()">Minta Prediksi</button></p>
+        <p id="pred">No prediction yet</p>
+        <canvas id="vChart" class="w-full" style="max-height: 320px;"></canvas>
+
+        <script>
+            const chart = new Chart(document.getElementById('vChart'), {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Voltage', data: [] }] }
+            });
+
+            async function loadData() {
+            const res = await fetch('/api/data');
+            const rows = await res.json();
+            chart.data.labels = rows.map(r => new Date(r.ts*1000).toLocaleTimeString());
+            chart.data.datasets[0].data = rows.map(r => r.voltage);
+            chart.update();
+            }
+
+            async function loadPrediction() {
+            const res = await fetch('/api/prediction/latest');
+            const js = await res.json();
+            const box = document.getElementById('pred');
+            if(!js.ok) { box.textContent = js.error || 'No prediction'; return; }
+            if(js.data){
+                box.textContent = `Next voltage: ${js.data.next_voltage} (${js.data.confidence}) — ${js.data.description}`;
+            } else {
+                box.textContent = js.text;
+            }
+            }
+
+            async function askPrediction(){
+            await fetch('/get/response');  // trigger Gemini call
+            loadPrediction();              // tampilkan hasil terbaru
+            }
+
+            // load awal
+            loadData();
+            loadPrediction();
+            setInterval(loadData, 30000);    // refresh data 30s
+            setInterval(loadPrediction, 30000);
+        </script>
+
+        <!-- Icon Navigation Grid -->
+        <nav id="icon-navigation" class="grid grid-cols-5 gap-4 text-center mb-8">
+            <div id="icon-recommendations">
+                <button id="rekomendasi-button" class="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center mb-2">
+                    <!-- Placeholder icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                    </svg>
+                </button>
+                <span class="text-xs text-gray-300">Rekomendasi Pintar</span>
+            </div>
+            <div id="icon-report">
+                <button id="lapor-button" class="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center mb-2">
+                    <!-- Placeholder icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h8a2 2 0 012 2v15l-6-3-6 3V5z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <span class="text-xs text-gray-300">Lapor</span>
+            </div>
+            <div id="icon-graphs">
+                <button id="grafik-button" class="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center mb-2">
+                    <!-- Placeholder icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 11a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H3a1 1 0 01-1-1v-2zm7 4a1 1 0 011-1h6a1 1 0 110 2h-6a1 1 0 01-1-1z" />
+                    </svg>
+                </button>
+                <span class="text-xs text-gray-300">Grafik</span>
+            </div>
+            <div id="icon-map">
+                <button id="peta-button" class="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center mb-2">
+                    <!-- Placeholder icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <span class="text-xs text-gray-300">Peta</span>
+            </div>
+            <div id="icon-settings">
+                <button id="pengaturan-button" class="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center mb-2">
+                    <!-- Placeholder icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.49 3.17a.75.75 0 011.02.13l.75 1.5.75-.75a.75.75 0 011.02.13L16 6.32a.75.75 0 01-.13 1.02l-1.5-.75-.75.75a.75.75 0 01-1.02-.13L9.5 5.56a.75.75 0 01.13-1.02l1.5.75.75-.75a.75.75 0 011.02-.13zM6 10a4 4 0 118 0 4 4 0 01-8 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <span class="text-xs text-gray-300">Pengaturan</span>
+            </div>
+        </nav>
+
+        <!-- Search and Filter Bar -->
+        <div id="search-bar" class="flex items-center space-x-2 mb-8">
+            <div id="search-input-container" class="relative flex-grow">
+                <input id="search-input" type="text" placeholder="Search here" class="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-800 text-white placeholder-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <button id="filter-button" class="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center">
+                <!-- Filter icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Transaction List -->
+        <section id="transaction-list-section" class="mb-24">
+            <div id="transaction-header" class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Transaction</h3>
+                <span class="text-sm text-gray-400">Sort by Name (A-Z)</span>
+            </div>
+
+            <!-- Transaction List Items -->
+            <ul id="transaction-list">
+                <!-- List Item 1 -->
+                <li id="transaction-item-1" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-lg">Sungai Buaran</span>
+                            <span class="text-sm text-green-500">Aktif</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-300">1500 Watt</span>
+                        <button id="detail-button-1" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
+                    </div>
+                </li>
+                <!-- List Item 2 -->
+                <li id="transaction-item-2" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-lg">Sungai Cakung</span>
+                            <span class="text-sm text-red-500">Pasif</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-300">0 Watt</span>
+                        <button id="detail-button-2" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
+                    </div>
+                </li>
+                <!-- List Item 3 -->
+                <li id="transaction-item-3" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-lg">Sungai Cipinang</span>
+                            <span class="text-sm text-green-500">Aktif</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-300">1200 Watt</span>
+                        <button id="detail-button-3" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
+                    </div>
+                </li>
+                 <!-- List Item 4 -->
+                 <li id="transaction-item-4" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-lg">Sungai Kalimalang</span>
+                            <span class="text-sm text-yellow-400">Penghasilan Rendah</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-300">300 Watt</span>
+                        <button id="detail-button-4" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
+                    </div>
+                </li>
+                <!-- List Item 5 -->
+                <li id="transaction-item-5" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-lg">Sungai Sudirman</span>
+                            <span class="text-sm text-red-500">Pasif</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-300">0 Watt</span>
+                        <button id="detail-button-5" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Fixed Bottom Navigation -->
+        <footer id="bottom-navigation" class="fixed bottom-0 left-0 right-0 p-4 bg-gray-800/80 backdrop-blur-sm rounded-t-3xl border-t border-gray-700 flex justify-around items-center max-w-lg mx-auto shadow-lg">
+            <button id="dashboard-button" class="flex flex-col items-center text-white">
+                <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2h-2zM11 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2z" />
+                    </svg>
+                </div>
+                <span class="text-xs mt-1">Dashboard</span>
+            </button>
+            <button id="bottom-grafik-button" class="flex flex-col items-center text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 11a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H3a1 1 0 01-1-1v-2zm7 4a1 1 0 011-1h6a1 1 0 110 2h-6a1 1 0 01-1-1z" />
+                </svg>
+                <span class="text-xs mt-1">Grafik</span>
+            </button>
+            <button id="bottom-peta-button" class="flex flex-col items-center text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-xs mt-1">Peta</span>
+            </button>
+            <button id="bottom-profile-button" class="flex flex-col items-center text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-xs mt-1">Profile</span>
+            </button>
+        </footer>
+    </div>
+    
+    <script>
+        // Get all buttons by their IDs
+        const buttons = document.querySelectorAll('button');
+
+        // Loop through each button and add a click event listener
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Acknowledge the click action in the console, but do nothing else
+                console.log(`Button with ID '${button.id}' was clicked.`);
+            });
+        });
+    </script>
+</body>
+</html>

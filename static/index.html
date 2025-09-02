@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>ESP32 Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>ESP32 Dashboard</h1>
+  <p><button onclick="askPrediction()">Minta Prediksi</button></p>
+  <p id="pred">No prediction yet</p>
+  <canvas id="vChart"></canvas>
+
+  <script>
+    const chart = new Chart(document.getElementById('vChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Voltage', data: [] }] }
+    });
+
+    async function loadData() {
+      const res = await fetch('/api/data');
+      const rows = await res.json();
+      chart.data.labels = rows.map(r => new Date(r.ts*1000).toLocaleTimeString());
+      chart.data.datasets[0].data = rows.map(r => r.voltage);
+      chart.update();
+    }
+
+    async function loadPrediction() {
+      const res = await fetch('/api/prediction/latest');
+      const js = await res.json();
+      const box = document.getElementById('pred');
+      if(!js.ok) { box.textContent = js.error || 'No prediction'; return; }
+      if(js.data){
+        box.textContent = `Next voltage: ${js.data.next_voltage} (${js.data.confidence}) — ${js.data.description}`;
+      } else {
+        box.textContent = js.text;
+      }
+    }
+
+    async function askPrediction(){
+      await fetch('/get/response');  // trigger Gemini call
+      loadPrediction();              // tampilkan hasil terbaru
+    }
+
+    // load awal
+    loadData();
+    loadPrediction();
+    setInterval(loadData, 30000);    // refresh data 30s
+    setInterval(loadPrediction, 30000);
+  </script>
+</body>
+</html>

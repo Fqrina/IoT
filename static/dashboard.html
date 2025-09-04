@@ -60,7 +60,10 @@
 
         <p><button onclick="askPrediction()">Minta Prediksi</button></p>
         <p id="pred">No prediction yet</p>
-        <canvas id="vChart" class="w-full" style="max-height: 320px;"></canvas>
+        <p id="pdes"></p>
+        <p id="next_volt"></p>
+        <p id="confid"></p>
+        <canvas id="vChart" class="w-full block h-64 md:h-72 lg:h-80 mt-6 mb-8"></canvas>
 
         <script>
             const chart = new Chart(document.getElementById('vChart'), {
@@ -71,8 +74,9 @@
             async function loadData() {
             const res = await fetch('/api/data');
             const rows = await res.json();
-            chart.data.labels = rows.map(r => new Date(r.ts*1000).toLocaleTimeString());
-            chart.data.datasets[0].data = rows.map(r => r.voltage);
+            const ordered = rows.slice().reverse();
+            chart.data.labels = ordered.map(r => new Date(r.ts*1000).toLocaleTimeString());
+            chart.data.datasets[0].data = ordered.map(r => r.voltage);
             chart.update();
             }
 
@@ -101,7 +105,21 @@
         </script>
 
         <script>
-            // Override: show newest on the right and format prediction nicely
+            // Helper to extract JSON even if wrapped with ```json ... ``` fences
+            function parseJsonish(txt){
+                if (!txt || typeof txt !== 'string') return null;
+                let t = txt.trim();
+                t = t.replace(/^```\s*json\s*/i, '').replace(/^```\s*/i, '');
+                t = t.replace(/```\s*$/i, '');
+                const start = t.indexOf('{');
+                const end = t.lastIndexOf('}');
+                if (start !== -1 && end !== -1 && end > start) {
+                    t = t.substring(start, end+1);
+                }
+                try { return JSON.parse(t); } catch { return null; }
+            }
+
+            // Override: show newest on the right and also fill JSON placeholders
             async function refreshChartAndPrediction() {
                 try {
                     const res = await fetch('/api/data');
@@ -116,12 +134,17 @@
                     const res = await fetch('/api/prediction/latest');
                     const js = await res.json();
                     const box = document.getElementById('pred');
+                    const pdes = document.getElementById('pdes');
+                    const nvolt = document.getElementById('next_volt');
+                    const confid = document.getElementById('confid');
                     if(!js.ok) { box.textContent = js.error || 'No prediction'; return; }
-                    if(js.data){
-                        const d = js.data;
-                        box.textContent = `description = ${d.description}; next voltage = ${d.next_voltage}; confidence = ${d.confidence}`;
-                    } else {
-                        box.textContent = js.text;
+                    // Keep full JSON/text in #pred
+                    box.textContent = js.data ? JSON.stringify(js.data) : (js.text || '');
+                    const d = js.data || parseJsonish(js.text);
+                    if (d){
+                        if(pdes) pdes.textContent = d.description ?? '';
+                        if(nvolt) nvolt.textContent = d.next_voltage ?? '';
+                        if(confid) confid.textContent = d.confidence ?? '';
                     }
                 } catch (e) { /* noop */ }
             }
@@ -138,7 +161,7 @@
         </script>
 
         <!-- Icon Navigation Grid -->
-        <nav id="icon-navigation" class="grid grid-cols-5 gap-4 text-center mb-8">
+        <nav id="icon-navigation" class="grid grid-cols-5 gap-6 text-center place-items-center my-6">
             <div id="icon-recommendations">
                 <button id="rekomendasi-button" class="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center mb-2">
                     <!-- Placeholder icon -->
@@ -146,7 +169,7 @@
                         <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                     </svg>
                 </button>
-                <span class="text-xs text-gray-300">Rekomendasi Pintar</span>
+                <span class="text-xs text-gray-300">RekomendasiPintar</span>
             </div>
             <div id="icon-report">
                 <button id="lapor-button" class="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center mb-2">

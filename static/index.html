@@ -9,6 +9,9 @@
   <h1>ESP32 Dashboard</h1>
   <p><button onclick="askPrediction()">Minta Prediksi</button></p>
   <p id="pred">No prediction yet</p>
+  <p id="pdes"></p>
+  <p id="next_volt"></p>
+  <p id="confid"></p>
   <canvas id="vChart"></canvas>
 
   <script>
@@ -49,7 +52,23 @@
     setInterval(loadPrediction, 30000);
   </script>
   <script>
-    // Override: show newest on the right and format prediction nicely
+    // Helper to extract JSON even if wrapped with ```json ... ``` fences
+    function parseJsonish(txt){
+      if (!txt || typeof txt !== 'string') return null;
+      let t = txt.trim();
+      // Strip code fences like ```json ... ```
+      t = t.replace(/^```\s*json\s*/i, '').replace(/^```\s*/i, '');
+      t = t.replace(/```\s*$/i, '');
+      // If still has surrounding text, try to grab the first {...} block
+      const start = t.indexOf('{');
+      const end = t.lastIndexOf('}');
+      if (start !== -1 && end !== -1 && end > start) {
+        t = t.substring(start, end+1);
+      }
+      try { return JSON.parse(t); } catch { return null; }
+    }
+
+    // Override: show newest on the right and also fill JSON placeholders
     async function refreshChartAndPrediction() {
       try {
         const res = await fetch('/api/data');
@@ -64,12 +83,18 @@
         const res = await fetch('/api/prediction/latest');
         const js = await res.json();
         const box = document.getElementById('pred');
+        const pdes = document.getElementById('pdes');
+        const nvolt = document.getElementById('next_volt');
+        const confid = document.getElementById('confid');
         if(!js.ok) { box.textContent = js.error || 'No prediction'; return; }
-        if(js.data){
-          const d = js.data;
-          box.textContent = `description = ${d.description}; next voltage = ${d.next_voltage}; confidence = ${d.confidence}`;
-        } else {
-          box.textContent = js.text;
+        // Keep whatever the server returns visible in #pred
+        box.textContent = js.data ? JSON.stringify(js.data) : (js.text || '');
+        // Fill placeholders from object or parsed text
+        const d = js.data || parseJsonish(js.text);
+        if (d) {
+          if(pdes) pdes.textContent = d.description ?? '';
+          if(nvolt) nvolt.textContent = d.next_voltage ?? '';
+          if(confid) confid.textContent = d.confidence ?? '';
         }
       } catch (e) { /* noop */ }
     }

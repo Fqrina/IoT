@@ -23,6 +23,8 @@ DB = "sensor.db"
 def home_page():
     return FileResponse("static/index.html")
 
+
+
 # model JSON dari ESP32
 class SensorIn(BaseModel):
     voltage: float

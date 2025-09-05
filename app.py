@@ -4,8 +4,8 @@ import sqlite3, time
 import os, json, time, sqlite3
 import google.generativeai as genai
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi import HTTPException
 
 
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")  # <-- nama env var
@@ -18,6 +18,8 @@ else:
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+# Serve the Volttrack frontend under /vol (allow index.html default)
+app.mount("/vol", StaticFiles(directory="vol/frontend", html=True), name="vol")
 
 DB = "sensor.db"
 def home_page():
@@ -47,14 +49,15 @@ def init_db():
 
 init_db()
 
-@app.get("/", response_class=FileResponse)
+# Redirect root to Volt frontend index
+@app.get("/", include_in_schema=False)
 def root():
-    return "static/index.html"
+    return RedirectResponse(url="/vol/index.html")
 
-
-@app.get("/")
-def home():
-    return {"message": "Hello from ESP32 backend!"}
+# Health check
+@app.get("/api/health")
+def health():
+    return {"ok": True}
 
 # endpoint ESP32 POST data ke sini
 @app.post("/esp32")
@@ -95,6 +98,15 @@ def db(query, params=(), fetch=False):
     out = cur.fetchall() if fetch else None
     conn.commit(); conn.close()
     return out
+
+# Simple demo login to support Volt frontend
+@app.post("/auth/login")
+def auth_login(payload: dict):
+    user = payload.get("username")
+    pwd = payload.get("password")
+    if user == "galapaksi81" and pwd == "123":
+        return {"user": {"username": user}}
+    raise HTTPException(status_code=401, detail="Login gagal")
 
 @app.get("/get/response")
 def get_response():

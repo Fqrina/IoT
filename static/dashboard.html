@@ -20,7 +20,7 @@
             background: linear-gradient(135deg, #6c47ff, #b55cff);
         }
     </style>
-</head>
+    </head>
 <body class="p-4 md:p-8 lg:p-12">
     <!-- Main container for the dashboard content, centered for laptop screens -->
     <div id="main-container" class="max-w-4xl mx-auto">
@@ -218,39 +218,29 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </div>
-            <button id="filter-button" class="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center">
-                <!-- Filter icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-            </button>
+            <button id="filter-button" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-xl">Filter</button>
         </div>
 
-        <!-- Transaction List -->
-        <section id="transaction-list-section" class="mb-24">
-            <div id="transaction-header" class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-semibold">Transaction</h3>
-                <span class="text-sm text-gray-400">Sort by Name (A-Z)</span>
-            </div>
-
-            <!-- Transaction List Items -->
+        <!-- Summary List Section -->
+        <section id="summary-list" class="mb-24">
+            <h3 class="text-xl font-semibold mb-4">Transaksi</h3>
             <ul id="transaction-list">
                 <!-- List Item 1 -->
                 <li id="transaction-item-1" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
                     <div class="flex items-center space-x-4">
                         <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-lg">Sungai Buaran</span>
+                            <span class="text-lg">Sungai Buarans</span>
                             <span class="text-sm text-green-500">Aktif</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <span class="text-sm text-gray-300">1500 Watt</span>
-                        <button id="detail-button-1" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
+                        <span class="text-sm text-gray-300">1000 Watt</span>
+                        <button id="detail-button-1" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full", >Detail</button>
                     </div>
                 </li>
                 <!-- List Item 2 -->
@@ -262,12 +252,12 @@
                             </svg>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-lg">Sungai Cakung</span>
-                            <span class="text-sm text-red-500">Pasif</span>
+                            <span class="text-lg">Sungai Ciliwung</span>
+                            <span class="text-sm text-yellow-400">Penghasilan Rendah</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <span class="text-sm text-gray-300">0 Watt</span>
+                        <span class="text-sm text-gray-300">500 Watt</span>
                         <button id="detail-button-2" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
                     </div>
                 </li>
@@ -280,7 +270,7 @@
                             </svg>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-lg">Sungai Cipinang</span>
+                            <span class="text-lg">Sungai Pesanggrahan</span>
                             <span class="text-sm text-green-500">Aktif</span>
                         </div>
                     </div>
@@ -289,8 +279,8 @@
                         <button id="detail-button-3" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full">Detail</button>
                     </div>
                 </li>
-                 <!-- List Item 4 -->
-                 <li id="transaction-item-4" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
+                <!-- List Item 4 -->
+                <li id="transaction-item-4" class="flex items-center justify-between bg-gray-800 rounded-xl p-4 mb-4">
                     <div class="flex items-center space-x-4">
                         <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -371,5 +361,14 @@
             });
         });
     </script>
+
+<script>
+    document.getElementById("detail-button-1").addEventListener("click", () => {
+      // ini otomatis ikut domain yg sedang dipakai
+      window.location.href = "/vol/detail.html";
+    });
+  </script>
+
+
 </body>
 </html>

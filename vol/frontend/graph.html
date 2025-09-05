@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoltStream — Grafik</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin:0; font-family:"Segoe UI",sans-serif; background:#0a0a0a; color:#fff; }
+    header { padding:1rem; font-weight:bold; font-size:1.2rem; }
+    .chart-container { margin:1rem; padding:1rem; background:#111; border-radius:15px; }
+    canvas { width:100% !important; height:300px !important; }
+    .bottom-nav { position:fixed; bottom:15px; left:50%; transform:translateX(-50%);
+      background:linear-gradient(135deg,#7b2ff7,#00c6ff); border-radius:30px;
+      display:flex; justify-content:space-around; padding:0.6rem 1.2rem; width:90%; max-width:400px; }
+    .bottom-item { text-align:center; font-size:0.7rem; }
+    .bottom-item i { display:block; font-size:1.3rem; }
+  </style>
+  <script src="https://kit.fontawesome.com/yourkitid.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>Grafik Energi Harian</header>
+
+  <div class="chart-container">
+    <canvas id="energyChart"></canvas>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
+    <div class="bottom-item"><i class="fas fa-chart-bar"></i><span>Grafik</span></div>
+    <div class="bottom-item"><a href="peta.html"><i class="fas fa-map-pin"></i><span>Peta</span></a></div>
+    <div class="bottom-item"><a href="profil.html"><i class="fas fa-user"></i><span>Profil</span></a></div>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('energyChart');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Sen','Sel','Rab','Kam','Jum','Sab','Min'],
+        datasets: [{
+          label: 'Energi (Wh)',
+          data: [1200, 1500, 1100, 1800, 2000, 1700, 2200],
+          borderColor: '#00c6ff',
+          backgroundColor: 'rgba(123,47,247,0.3)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: { scales: { y: { beginAtZero:true } }, plugins:{legend:{labels:{color:'#fff'}}}}
+    });
+  </script>
+</body>
+</html>

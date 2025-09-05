@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoltStream - Detail Sungai</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin:0; font-family:"Segoe UI",sans-serif; background:#0a0a0a; color:#fff; }
+    header { padding:1rem; font-weight:bold; font-size:1.2rem; }
+    .card { background:#111; margin:1rem; padding:1rem; border-radius:15px; }
+    .row { display:flex; justify-content:space-between; margin:0.5rem 0; }
+    .bottom-nav { position:fixed; bottom:15px; left:50%; transform:translateX(-50%);
+      background:linear-gradient(135deg,#7b2ff7,#00c6ff); border-radius:30px;
+      display:flex; justify-content:space-around; padding:0.6rem 1.2rem; width:90%; max-width:400px; }
+    .bottom-item { text-align:center; font-size:0.7rem; }
+    .bottom-item i { display:block; font-size:1.3rem; }
+  </style>
+  <script src="https://kit.fontawesome.com/yourkitid.js" crossorigin="anonymous"></script>
+  </head>
+<body>
+  <header>Detail Sungai Buaran</header>
+
+  <div class="card">
+    <div class="row"><span>Tegangan</span><span>2.1 V</span></div>
+    <div class="row"><span>Arus</span><span>0.57 A</span></div>
+    <div class="row"><span>Daya</span><span>120 W</span></div>
+    <div class="row"><span>pH</span><span>6.8</span></div>
+    <div class="row"><span>Suhu</span><span>27 °C</span></div>
+    <div class="row"><span>COD</span><span>45 mg/L</span></div>
+    <div class="row"><span>BOD</span><span>15 mg/L</span></div>
+    <div class="row"><span>Efisiensi</span><span>78%</span></div>
+    <div class="row"><span>Energi Tersimpan</span><span>65%</span></div>
+    <div class="row"><span>Update Terakhir</span><span>3 menit lalu</span></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 0.8rem 0; font-size:1rem; font-weight:600; color:#eee">Grafik Tegangan (Realtime)</h3>
+    <div style="height:300px">
+      <canvas id="vChart"></canvas>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
+    <div class="bottom-item"><a href="grafik.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
+    <div class="bottom-item"><a href="peta.html"><i class="fas fa-map-pin"></i><span>Peta</span></a></div>
+    <div class="bottom-item"><a href="profil.html"><i class="fas fa-user"></i><span>Profil</span></a></div>
+  </div>
+
+  <script>
+    // Inisialisasi Chart.js + fetch data dari backend agar mirip dashboard asli
+    const vctx = document.getElementById('vChart');
+    let vChart;
+    function ensureChart(){
+      if (!vChart && vctx) {
+        vChart = new Chart(vctx, {
+          type: 'line',
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Voltage (V)',
+              data: [],
+              borderColor: '#00c6ff',
+              backgroundColor: 'rgba(123,47,247,0.25)',
+              fill: true,
+              tension: 0.3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: false, ticks: { color: '#fff' } },
+              x: { ticks: { color: '#fff' } }
+            },
+            plugins: { legend: { labels: { color: '#fff' } } }
+          }
+        });
+      }
+    }
+
+    async function loadData(){
+      try {
+        const res = await fetch('/api/data');
+        const rows = await res.json();
+        const ordered = rows.slice().reverse(); // jadikan terbaru di kanan, sama seperti dashboard
+        ensureChart();
+        if (vChart){
+          vChart.data.labels = ordered.map(r => new Date(r.ts*1000).toLocaleTimeString());
+          vChart.data.datasets[0].data = ordered.map(r => r.voltage);
+          vChart.update();
+        }
+      } catch(e){
+        console.error('Gagal memuat data grafik', e);
+      }
+    }
+
+    loadData();
+    setInterval(loadData, 30000);
+  </script>
+
+
+</body>
+</html>

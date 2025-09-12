@@ -6,6 +6,7 @@ import google.generativeai as genai
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi import HTTPException
+from urllib.parse import quote
 
 
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")  # <-- nama env var
@@ -148,3 +149,20 @@ def latest_prediction():
         return {"ok": True, "ts": ts, "data": parsed}
     except Exception:
         return {"ok": True, "ts": ts, "text": text}
+
+
+# Endpoint sederhana untuk memicu popup notifikasi di dashboard
+@app.get("/notify")
+def notify(msg: str | None = None):
+    """
+    Arahkan ke /vol/dashboard.html dengan query ?notif=...
+    Contoh:
+      - /notify            -> tampilkan pesan default
+      - /notify?msg=Halo   -> tampilkan pesan kustom
+    """
+    target = "/vol/dashboard.html"
+    if msg:
+        target += f"?notif={quote(msg)}"
+    else:
+        target += "?notif=1"
+    return RedirectResponse(url=target)

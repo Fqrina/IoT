@@ -85,20 +85,34 @@
     /* Menu utama */
     .menu {
       display: flex;
-      justify-content: space-around;
-      padding: 1rem;
+      justify-content: space-between; /* mirip tampilan contoh pertama */
+      gap: 16px;
+      padding: 1rem 1.2rem;
       text-align: center;
     }
     .menu-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      min-width: 60px;
+      color: #eaeaea;
     }
+    /* Icon kotak abu-abu di atas teks */
     .menu-item i {
-      font-size: 1.4rem;
-      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: #3b3b3b;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      font-size: 22px; /* kalau icon font tersedia */
+      margin-bottom: 8px;
+      color: #bfbfbf;
     }
+    .menu-item span { color:#eaeaea; font-weight: 600; line-height: 1.1; }
 
     /* Search bar */
     .search {
@@ -148,6 +162,13 @@
       padding: 1rem;
       border-radius: 12px;
     }
+    /* Right side: watt + button sejajar 1 baris */
+    .transaction-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .transaction-actions p { margin: 0; white-space: nowrap; color: #ddd; }
     .transaction-info {
       display: flex;
       align-items: center;
@@ -235,8 +256,8 @@
   <!-- Energi Card -->
   <div class="energy-card">
     <div class="energy-left">
-      <h1>2500 Watt</h1>
-      <p>+ 1200 Watt dari minggu lalu</p>
+      <h1>8 kWh</h1>
+      <p>Energi yang dihasilkan hari ini</p>
     </div>
     <div class="energy-right">
       <!-- <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Coat_of_arms_of_Jakarta.svg" alt="Logo DKI"> -->
@@ -244,10 +265,13 @@
     </div>
   </div>
 
+  <!-- spacer agar bisa scroll lebih jauh ke bawah -->
+  <!-- <div aria-hidden="true" style="height: 140px; pointer-events:none;"></div> -->
+
   <!-- Menu utama -->
   <div class="menu">
     <div class="menu-item"><i class="fas fa-calendar"></i><span>Rekomendasi Pintar</span></div>
-    <div class="menu-item"><i class="fas fa-file-alt"></i><span>Lapor</span></div>
+    <a class="menu-item" href="feedback.html"><i class="fas fa-file-alt"></i><span>Lapor</span></a>
     <div class="menu-item"><i class="fas fa-chart-bar"></i><span>Grafik</span></div>
     <div class="menu-item"><i class="fas fa-map-pin"></i><span>Peta</span></div>
     <div class="menu-item"><i class="fas fa-ellipsis-h"></i><span>Pengaturan</span></div>
@@ -273,8 +297,8 @@
           <p class="status aktif">Aktif</p>
         </div>
       </div>
-      <div>
-        <p>1500 Watt</p>
+      <div class="transaction-actions">
+        <p>4 kWh</p>
         <button class="detail-btn">Detail</button>
       </div>
     </div>
@@ -287,8 +311,8 @@
           <p class="status pasif">Pasif</p>
         </div>
       </div>
-      <div>
-        <p>0 Watt</p>
+      <div class="transaction-actions">
+        <p>0 kWh</p>
         <button class="detail-btn">Detail</button>
       </div>
     </div>
@@ -297,12 +321,12 @@
       <div class="transaction-info">
         <div class="icon-sungai"><i class="fas fa-water"></i></div>
         <div>
-          <p><b>Sungai Cipinang</b></p>
+          <p><b>Sungai Cilliwung</b></p>
           <p class="status aktif">Aktif</p>
         </div>
       </div>
-      <div>
-        <p>1200 Watt</p>
+      <div class="transaction-actions">
+        <p>3 kWh</p>
         <button class="detail-btn">Detail</button>
       </div>
     </div>
@@ -315,8 +339,8 @@
           <p class="status rendah">Penghasilan Rendah</p>
         </div>
       </div>
-      <div>
-        <p>300 Watt</p>
+      <div class="transaction-actions">
+        <p>1 kWh</p>
         <button class="detail-btn">Detail</button>
       </div>
     </div>
@@ -329,17 +353,18 @@
           <p class="status pasif">Pasif</p>
         </div>
       </div>
-      <div>
-        <p>0 Watt</p>
+      <div class="transaction-actions">
+        <p>0 kWh</p>
         <button class="detail-btn">Detail</button>
       </div>
     </div>
   </div>
+  <div aria-hidden="true" style="height: 140px; pointer-events:none;"></div>
 
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
-    <div class="bottom-item"><a href="grafik.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
+    <div class="bottom-item"><a href="graph.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
     <div class="bottom-item"><a href="feedback.html"><i class="fas fa-user"></i><span>Feedback</span></a></div>
   </div>
 
@@ -373,8 +398,21 @@
   // ambil semua tombol dengan class "detail-btn"
   document.querySelectorAll(".detail-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      // otomatis ikut domain yg sedang dipakai
-      window.location.href = "/vol/detail.html";
+      // tentukan halaman detail berdasarkan nama sungai pada item
+      const item = btn.closest('.transaction-item');
+      const nameEl = item ? item.querySelector('.transaction-info b') : null;
+      const name = nameEl ? nameEl.textContent.trim().toLowerCase() : '';
+      const map = new Map([
+        ['sungai buaran', '/vol/detailb.html'],
+        ['sungai cakung', '/vol/detailca.html'],
+        ['sungai ciliwung', '/vol/detailci.html'],
+        ['sungai cilliwung', '/vol/detailci.html'],
+        ['sungai cillliwung', '/vol/detailci.html'],
+        ['sungai kalimalang', '/vol/detailk.html'],
+        ['sungai sunter', '/vol/details.html'],
+      ]);
+      const target = map.get(name) || '/vol/detail.html';
+      window.location.href = target;
     });
   });
 </script>

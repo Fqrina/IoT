@@ -1,114 +1,123 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VoltStream — Login</title>
   <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, #7b2ff7, #00c6ff);
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    :root{
+      --bg1:#121212; --bg2:#1a1a1a; --card:#1b1b1b; --muted:#bdbdbd; --text:#ffffff;
+      --border:#454545; --accent1:#9b34ef; --accent2:#3aa0ff;
     }
-    .login-card {
-      background: rgba(0, 0, 0, 0.75);
-      padding: 2rem;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 350px;
-      color: #fff;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-      text-align: center;
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background: radial-gradient(1200px 800px at 75% 95%, rgba(155,52,239,.28), transparent 55%),
+                  radial-gradient(1200px 800px at 5% 0%, rgba(58,160,255,.28), transparent 45%),
+                  linear-gradient(180deg, #101010, #0b0b0b 60%);
+      display:flex; align-items:center; justify-content:center; padding:24px;
     }
-    .login-card h2 {
-      margin-bottom: 1.5rem;
-      font-weight: bold;
-      font-size: 1.5rem;
+    .card{
+      width:100%; max-width:420px; background:var(--card); border-radius:18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      padding:28px 26px; position:relative; overflow:hidden;
     }
-    .input-group {
-      margin-bottom: 1.2rem;
-      text-align: left;
+    .avatar{
+      width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,var(--accent1),var(--accent2));
+      display:flex; align-items:center; justify-content:center; margin:6px auto 14px auto; color:#fff;
+      box-shadow:0 8px 24px rgba(0,0,0,.35);
     }
-    .input-group label {
-      display: block;
-      margin-bottom: 0.3rem;
-      font-size: 0.9rem;
-      color: #ccc;
+    .avatar svg{ width:34px; height:34px; }
+    h1{ margin:0; text-align:center; font-size:1.35rem; letter-spacing:.2px; }
+    .subtitle{ margin:8px 0 22px 0; text-align:center; color:var(--muted); font-size:.95rem; }
+    .subtitle a{ color:#fff; font-weight:700; text-decoration:none; }
+
+    label{ display:block; font-size:.9rem; margin:14px 2px 8px; color:#e8e8e8; }
+    .field{ display:flex; align-items:center; border:1px solid var(--border); border-radius:10px; padding:12px 14px; background:#141414; }
+    .field input{ flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:.98rem; }
+    .remember{ display:flex; align-items:center; gap:10px; margin:12px 2px 6px; color:#cfcfcf; font-size:.9rem; }
+    .remember input{ width:18px; height:18px; accent-color:#7b2ff7; }
+
+    .btn-primary{
+      margin-top:14px; width:100%;
+      background:linear-gradient(135deg,var(--accent1),var(--accent2));
+      color:#fff; border:none; border-radius:12px; padding:14px 16px; font-size:1.05rem; font-weight:800; cursor:pointer;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); transition:filter .15s ease, transform .05s ease;
     }
-    .input-group input {
-      width: 100%;
-      padding: 0.8rem;
-      border-radius: 12px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-      background: #222;
-      color: #fff;
-    }
-    .btn-login {
-      width: 100%;
-      padding: 0.9rem;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #7b2ff7, #00c6ff);
-      color: #fff;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 0.5rem;
-      transition: 0.3s;
-    }
-    .btn-login:hover {
-      opacity: 0.9;
-    }
-    .meta {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      color: #ff6b6b;
-      font-weight: bold;
-    }
+    .btn-primary:active{ transform:translateY(1px); }
+    .btn-primary:hover{ filter:brightness(1.06); }
+
+    .divider{ display:flex; align-items:center; gap:12px; color:#c9c9c9; margin:18px 0 12px; }
+    .divider::before, .divider::after{ content:""; flex:1; height:1px; background:#2d2d2d; }
+
+    .btn-social{ width:100%; background:#fff; color:#111; border:none; border-radius:12px; padding:12px 14px;
+      display:flex; align-items:center; gap:10px; font-weight:700; cursor:pointer; margin:10px 0; font-size:.98rem; }
+    .btn-social svg{ width:20px; height:20px; }
+
+    .error{ margin-top:10px; color:#ff6b6b; font-size:.9rem; min-height:1.1em; }
   </style>
 </head>
 <body>
-  <div class="login-card">
-    <h2>VoltStream Login</h2>
-    <div class="input-group">
-      <label>Username</label>
-      <input id="username" type="text" placeholder="galapaksi81" />
+  <main class="card" role="main">
+    <div class="avatar" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 12a5 5 0 100-10 5 5 0 000 10zM2 20a10 10 0 1120 0v1H2v-1z"/>
+      </svg>
     </div>
-    <div class="input-group">
-      <label>Password</label>
-      <input id="password" type="password" placeholder="123" />
-    </div>
-    <button class="btn-login" onclick="login()">Masuk</button>
-    <p id="msg" class="meta"></p>
-  </div>
+    <h1>Welcome to Voltstream</h1>
+    <div class="subtitle">Please log in to an existing account or <a href="#">Create an Account</a></div>
+
+    <form id="login-form">
+      <label for="email">Email atau Username</label>
+      <div class="field"><input id="email" type="text" placeholder="example@gmail.com / galapaksi81" autocomplete="username" required /></div>
+
+      <label for="password">Password</label>
+      <div class="field"><input id="password" type="password" placeholder="Password / 123" autocomplete="current-password" required /></div>
+
+      <div class="remember">
+        <input id="remember" type="checkbox" />
+        <label for="remember" style="margin:0;">Remember me</label>
+      </div>
+
+      <button type="submit" class="btn-primary">Log In</button>
+      <div id="err" class="error"></div>
+    </form>
+
+    <div class="divider">OR</div>
+
+    <button class="btn-social" type="button" aria-label="Continue with Google">
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657 C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.197l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.188,0-9.594-3.317-11.254-7.946l-6.54,5.038C9.518,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.793,2.239-2.231,4.166-4.093,5.566c0.001-0.001,0.002-0.001,0.003-0.002 l6.19,5.238C37.182,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+      Continue With Google
+    </button>
+    <button class="btn-social" type="button" aria-label="Continue with Apple">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.365 1.43c0 1.14-.419 2.23-1.139 3.052-.728.826-1.91 1.462-3.081 1.373-.143-1.09.455-2.248 1.139-2.95.728-.827 1.992-1.428 3.081-1.475zm5.167 16.34c-.638 1.415-1.41 2.808-2.533 4.234-1.034 1.31-2.26 2.95-3.892 2.95-1.688 0-2.116-.948-3.919-.948-1.831 0-2.31.913-3.946.961-1.637.048-2.895-1.42-3.933-2.733C1.82 19.286.5 16.208.5 13.29c0-2.717 1.42-4.96 3.54-6.007 1.013-.52 2.402-.882 3.82-.428.455.143.948.31 1.39.523.455.214.991.523 1.574.5.523-.024 1.03-.333 1.476-.548.733-.357 1.45-.706 2.297-.566 1.347.214 2.634.995 3.449 2.13-1.368.833-2.284 2.31-2.106 3.986.19 1.799 1.45 3.118 3.096 3.592 1.03.286 2.052.238 3.05-.095-.095.262-.19.5-.286.763z" fill="#000"/></svg>
+      Continue With Apple
+    </button>
+  </main>
 
   <script>
-    const API = ''; // same-origin (works on 127, ngrok, Netlify proxy)
-    function login() {
-      fetch(`${API}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: document.getElementById("username").value,
-          password: document.getElementById("password").value,
-        }),
-      })
-      .then((res) => {
-        if (!res.ok) throw new Error("Login gagal");
-        return res.json();
-      })
-      .then((data) => {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        window.location.href = "dashboard.html";
-      })
-      .catch((e) => (document.getElementById("msg").innerText = e.message));
-    }
+    const f = document.getElementById('login-form');
+    const email = document.getElementById('email');
+    const pass = document.getElementById('password');
+    const remember = document.getElementById('remember');
+    const err = document.getElementById('err');
+
+    // restore
+    try { const u = localStorage.getItem('vs_user'); if(u){ email.value = u; remember.checked = true; } } catch(e){}
+
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault(); err.textContent = '';
+      const payload = { username: email.value.trim(), password: pass.value };
+      try {
+        const res = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if(!res.ok){ const js = await res.json().catch(()=>({detail:'Login gagal'})); throw new Error(js.detail || 'Login gagal'); }
+        if(remember.checked){ try{ localStorage.setItem('vs_user', email.value.trim()); }catch(e){} }
+        // sukses -> ke dashboard
+        window.location.href = '/vol/dashboard.html';
+      } catch(e){ err.textContent = e.message || 'Login gagal'; }
+    });
   </script>
 </body>
 </html>

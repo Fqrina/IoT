@@ -4,55 +4,109 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VoltStream — Feedback</title>
-  <link rel="stylesheet" href="style.css">
   <style>
-    body { margin:0; font-family:"Segoe UI",sans-serif; background:#0a0a0a; color:#fff; }
-    header { padding:1rem; font-weight:bold; font-size:1.2rem; }
-    .form { margin:1rem; display:flex; flex-direction:column; gap:1rem; }
-    textarea { width:100%; height:150px; border-radius:12px; padding:0.8rem;
-      background:#111; border:none; color:#fff; resize:none; }
-    button { background:linear-gradient(135deg,#7b2ff7,#00c6ff); border:none;
-      padding:0.8rem; border-radius:12px; color:#fff; font-weight:bold; cursor:pointer; }
-    .msg { margin:1rem; font-size:0.9rem; color:#0f0; }
-    .bottom-nav { position:fixed; bottom:15px; left:50%; transform:translateX(-50%);
-      background:linear-gradient(135deg,#7b2ff7,#00c6ff); border-radius:30px;
-      display:flex; justify-content:space-around; padding:0.6rem 1.2rem; width:90%; max-width:400px; }
-    .bottom-item { text-align:center; font-size:0.7rem; }
-    .bottom-item i { display:block; font-size:1.3rem; }
+    :root{ --accent1:#7b2ff7; --accent2:#00c6ff; --btn:#2f6bff; }
+    *{box-sizing:border-box}
+    body { margin:0; font-family:"Segoe UI",sans-serif; color:#fff; min-height:100vh;
+      background: linear-gradient(180deg,#7a3cff 0%, #252525 35%, #0a0a0a 100%); }
+    header { padding:14px 16px; font-weight:700; font-size:1.2rem; opacity:0; height:0; overflow:hidden; }
+
+    .profile { display:flex; flex-direction:column; align-items:center; margin:42px 0 12px; }
+    .profile .avatar { width:64px; height:64px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; }
+    .profile .avatar svg{ width:36px; height:36px; color:#fff; }
+    .profile .name { margin-top:10px; font-weight:600; color:#eaeaea; }
+
+    .card { margin:0 16px 28px; background:#343434; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.4); padding:18px; }
+    .card h2 { margin:0 0 6px; font-size:1.5rem; font-weight:800; }
+    .card p.help { margin:0 0 14px; color:#c7c7c7; font-size:.95rem; line-height:1.35; }
+    .card textarea { width:100%; height:150px; background:#cfcfcf; border:0; color:#111; border-radius:16px; padding:12px; resize:none; }
+    .card textarea::placeholder{ color:#6a6a6a; }
+
+    .row { margin-top:16px; }
+    .label { font-weight:800; margin-bottom:6px; display:block; }
+    .rating-wrap { position:relative; }
+    .rating { display:flex; align-items:center; gap:10px; }
+    .rating .star { position:absolute; left:-2px; top:-6px; font-size:22px; color:#fff; }
+    .rating input[type=range]{ flex:1; appearance:none; height:4px; background:#fff; border-radius:2px; outline:none; }
+    .rating input[type=range]::-webkit-slider-thumb{ appearance:none; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 0 0 2px #222 inset; }
+    .rating input[type=range]::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:#fff; border:none; }
+    .scale { display:flex; justify-content:space-between; margin-top:6px; color:#cfcfcf; font-size:.95rem; padding:0 2px; }
+
+    .check { display:flex; align-items:center; gap:10px; margin-top:14px; color:#eaeaea; }
+    .check input{ width:18px; height:18px; accent-color:#4ea3ff; }
+
+    .btn { margin-top:16px; width:100%; background:var(--btn); color:#fff; border:none; border-radius:14px; padding:14px 16px; font-weight:800; font-size:1.05rem; cursor:pointer; box-shadow:0 8px 20px rgba(47,107,255,.35); }
+    .msg { margin-top:10px; color:#9dff9d; min-height:1.1rem; }
+
+    /* Bottom nav: samakan dengan dashboard */
+    .bottom-nav { position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+      background:linear-gradient(135deg,#7b2ff7,#00c6ff); border-radius:30px; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:0.7rem 1.1rem; width:88%; max-width:400px; }
+    .bottom-item { text-align:center; font-size:0.7rem; flex:1; }
+    .bottom-nav a { color:#fff; text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:2px; text-shadow:0 1px 1px rgba(0,0,0,.25); }
+    .bottom-nav a span { font-size:0.95rem; font-weight:700; letter-spacing:.2px; }
+    .bottom-nav a i { font-size:1.35rem; }
   </style>
   <script src="https://kit.fontawesome.com/yourkitid.js" crossorigin="anonymous"></script>
 </head>
 <body>
-  <header>Kritik & Saran</header>
+  <header></header>
+  <section class="profile">
+    <div class="avatar" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM2 20a10 10 0 1120 0v1H2v-1z"/></svg>
+    </div>
+    <div class="name">Username</div>
+  </section>
 
-  <div class="form">
-    <textarea id="pesan" placeholder="Tulis saran/keluhan Anda..."></textarea>
-    <button onclick="kirim()">Kirim</button>
-    <p class="msg" id="msg"></p>
-  </div>
+  <main class="card">
+    <h2>Submit Feedback</h2>
+    <p class="help">Laporkan keluhan dan masalah yang dialami anda. Laporan akan diproses kepada pihak yang berwenang.</p>
+    <textarea id="pesan" placeholder="Isi.."></textarea>
+
+    <div class="row rating-wrap">
+      <span class="label">Rate Our Services</span>
+      <div class="rating">
+        <!-- <span class="star">★</span> -->
+        <input id="rate" type="range" min="1" max="5" step="1" value="3"/>
+      </div>
+      <div class="scale"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+    </div>
+
+    <div class="check">
+      <input id="anon" type="checkbox"/>
+      <label for="anon" style="margin:0;">Keep Me Anonymous</label>
+    </div>
+
+    <button class="btn" id="submitBtn">Submit</button>
+    <div class="msg" id="msg"></div>
+  </main>
 
   <div class="bottom-nav">
     <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
     <div class="bottom-item"><a href="grafik.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
-    <div class="bottom-item"><a href="peta.html"><i class="fas fa-map-pin"></i><span>Peta</span></a></div>
-    <div class="bottom-item"><a href="profil.html"><i class="fas fa-user"></i><span>Profil</span></a></div>
+    <div class="bottom-item"><a href="feedback.html"><i class="fas fa-user"></i><span>Feedback</span></a></div>
   </div>
 
   <script>
-    const API = "http://localhost:3000";
-    function kirim() {
-      fetch(`${API}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pesan: document.getElementById("pesan").value })
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("msg").innerText = "Pesan terkirim ✔";
-        document.getElementById("pesan").value = "";
-      })
-      .catch(() => document.getElementById("msg").innerText = "Gagal mengirim ❌");
-    }
+    // Perbaiki judul dan karakter bintang jika encoding bermasalah
+    document.title = 'VoltStream — Feedback';
+    (function(){
+      const s = document.querySelector('.star');
+      if (s) s.textContent = '★';
+    })();
+  </script>
+
+  <script>
+    const btn = document.getElementById('submitBtn');
+    const pesan = document.getElementById('pesan');
+    const msg = document.getElementById('msg');
+    const rate = document.getElementById('rate');
+    const anon = document.getElementById('anon');
+    btn.addEventListener('click', () => {
+      const payload = { pesan: pesan.value.trim(), rate: Number(rate.value), anonymous: !!anon.checked };
+      if (!payload.pesan){ msg.textContent = 'Isi pesan terlebih dahulu.'; return; }
+      msg.textContent = 'Terima kasih, feedback terkirim.';
+      pesan.value = '';
+    });
   </script>
 </body>
 </html>

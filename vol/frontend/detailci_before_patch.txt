@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VoltStream - Detail Sungai Buaran</title>
+  <title>VoltStream - Detail Sungai Cipinang</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,7 +12,6 @@
     header { padding:1rem; font-weight:bold; font-size:1.2rem; }
     .card { background:#111; margin:1rem; padding:1rem; border-radius:15px; }
     .row { display:flex; justify-content:space-between; margin:0.5rem 0; }
-    /* Bottom nav: samakan dengan dashboard */
     .bottom-nav { position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
       background:linear-gradient(135deg,#7b2ff7,#00c6ff); border-radius:30px; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:0.7rem 1.1rem; width:88%; max-width:400px; }
     .bottom-item { text-align:center; font-size:0.7rem; flex:1; }
@@ -20,29 +19,29 @@
     .bottom-nav a span { font-size:0.95rem; font-weight:700; letter-spacing:.2px; }
     .bottom-nav a i { font-size:1.35rem; }
   </style>
+  <script src="https://kit.fontawesome.com/yourkitid.js" crossorigin="anonymous"></script>
   </head>
 <body>
-  <header>Detail Sungai Buaran</header>
+  <header>Detail Sungai Cilliwung</header>
+
+<!-- Sungai / Kali Ciliwung -->
+<div class="card">
+  <iframe
+    src="https://www.google.com/maps?q=-6.121361,106.8289672&hl=id&z=17&output=embed"
+    width="100%"
+    height="250"
+    style="border:0;"
+    allowfullscreen=""
+    loading="lazy">
+  </iframe>
+</div>
+
 
   <div class="card">
-    <!--
-    <iframe
-      src="https://www.google.com/maps?q=-6.2235171,106.9244637&hl=id&z=15&output=embed"
-      width="100%"
-      height="250"
-      style="border:0;"
-      allowfullscreen=""
-      loading="lazy">
-    </iframe>
-    -->
-    <img src="buaran.jpg" alt="Peta Sungai Buaran" style="width:100%; height:250px; object-fit:cover; border-radius:8px;" />
-  </div>
-
-  <div class="card">
-    <div class="row"><span>Tegangan</span><span id="voltVal">-</span></div>
-    <div class="row"><span>Arus</span><span id="ampVal">-</span></div>
-    <div class="row"><span>Daya</span><span id="powerVal">-</span></div>
-    <div class="row"><span>Emisi yang dikurangi</span><span id="co2eVal">-</span></div>
+    <div class="row"><span>Tegangan</span><span>2.1 V</span></div>
+    <div class="row"><span>Arus</span><span id=\ampVal\>-</span></div>
+    <div class="row"><span>Daya</span><span id=\powerVal\>-</span></div>
+    <div class="row"><span>Emisi yang dikurangi</span><span id=\co2eVal\>-</span></div>
     <div class="row"><span>Temperature</span><span id="tempVal">-</span></div>
     <div class="row"><span>Kelembapan</span><span id="humidVal">-</span></div>
     <div class="row"><span>Update Terakhir</span><span id="updatedAgo">-</span></div>
@@ -78,7 +77,7 @@
     }
     async function loadData(){
       try {
-        const res = await fetch('/api/data?cls=buaran');
+        const res = await fetch('/api/data?cls=cilliwung');
         const rows = await res.json();
         const ordered = rows.slice().reverse();
         if (Array.isArray(rows) && rows.length){
@@ -110,119 +109,69 @@
   <script>
     // Combined chart: 12 historical (blue) + 12 predicted (orange)
     (function(){
-      const CLS = 'buaran';
+      const CLS = 'cilliwung';
       const ctx = document.getElementById('vChart');
       function fmtHour(ts){ const d=new Date(ts*1000); return String(d.getHours()).padStart(2,'0'); }
       function parseJsonish(txt){ if(!txt||typeof txt!=='string')return null; let t=txt.trim(); t=t.replace(/^```\s*json\s*/i,'').replace(/^```\s*/i,''); t=t.replace(/```\s*$/i,''); try{ return JSON.parse(t);}catch(e){ return null; } }
 
-      function fmt(n, unit, digits=2){ if(n===null||n===undefined||Number.isNaN(+n)) return '-'; return `${Number(n).toFixed(digits)} ${unit}` }
-      function updateInfo(latest){
-        if(!latest) return;
-        const volt = document.getElementById('voltVal');
-        const amp = document.getElementById('ampVal');
-        const pow = document.getElementById('powerVal');
-        const co2 = document.getElementById('co2eVal');
-        const tmp = document.getElementById('tempVal');
-        const hum = document.getElementById('humidVal');
-        const ago = document.getElementById('updatedAgo');
-        if(volt) volt.textContent = fmt(latest.voltage,'V',1);
-        if(amp) amp.textContent = fmt(latest.ampere,'A',2);
-        let p = latest.power; if((p==null||Number.isNaN(+p)) && latest.voltage!=null && latest.ampere!=null){ p = Number(latest.voltage)*Number(latest.ampere); }
-        if(pow) pow.textContent = fmt(p,'W',0);
-        if(co2) co2.textContent = fmt(latest.co2e,'ton CO2E',2);
-        if(tmp) tmp.textContent = fmt(latest.temp,'°C',1);
-        if(hum) hum.textContent = fmt(latest.humid,'%',0);
-        if(ago && latest.ts!=null){ const now=Math.floor(Date.now()/1000); const mins=Math.max(0,Math.floor((now-Number(latest.ts))/60)); ago.textContent = `${mins} menit lalu`; }
-      }
-
       async function load(){
         try{
-          // Selalu minta pembaruan prediksi ketika masuk halaman
           try{ await fetch('/get/response'); }catch(e){}
-          // 12 historis
           const res = await fetch(`/api/data?cls=${CLS}&limit=12`);
           const rows = await res.json();
           const hist = (Array.isArray(rows)? rows.slice(0,12):[]).slice().reverse();
-          updateInfo(Array.isArray(rows) && rows.length ? rows[0] : null);
-
-          // Prediksi 12 langkah
           let pred=null; try{ const j=await (await fetch('/api/prediction/latest')).json(); pred=j.data||parseJsonish(j.text);}catch(e){}
           const next=(pred&&pred[CLS]&&Array.isArray(pred[CLS].next_voltage))? pred[CLS].next_voltage.slice(0,12).map(Number):[];
-
-          // Labels HH untuk 12 historis + 12 prediksi
           const labels = hist.map(r=>fmtHour(r.ts));
           const lastTs = hist.length? hist[hist.length-1].ts : Math.floor(Date.now()/1000);
           for(let i=1;i<=12;i++){ labels.push(fmtHour(lastTs + i*3600)); }
-
-          // Destroy chart lama kalau ada, lalu buat baru dengan 2 dataset
           const existing = (Chart.getChart ? Chart.getChart(ctx) : null); if(existing) existing.destroy();
-          const chart = new Chart(ctx, {
-            type:'line',
-            data:{ labels, datasets:[
-              { label:'Aktual (V)', data: hist.map(r=>r.voltage).concat(Array(12).fill(null)), borderColor:'#00c6ff', backgroundColor:'rgba(0,198,255,0.18)', fill:true, tension:0.3 },
-              { label:'Prediksi (V)', data: Array(hist.length).fill(null).concat(next), borderColor:'#ff9800', backgroundColor:'rgba(255,152,0,0.12)', fill:true, tension:0.3, borderDash:[6,4] }
-            ]},
-            options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ticks:{color:'#fff'}}, x:{ticks:{color:'#fff'}}}, plugins:{legend:{labels:{color:'#fff'}}} }
-          });
+          new Chart(ctx, { type:'line', data:{ labels, datasets:[
+            { label:'Aktual (V)', data: hist.map(r=>r.voltage).concat(Array(12).fill(null)), borderColor:'#00c6ff', backgroundColor:'rgba(0,198,255,0.18)', fill:true, tension:0.3 },
+            { label:'Prediksi (V)', data: Array(hist.length).fill(null).concat(next), borderColor:'#ff9800', backgroundColor:'rgba(255,152,0,0.12)', fill:true, tension:0.3, borderDash:[6,4] }
+          ]}, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ticks:{color:'#fff'}}, x:{ticks:{color:'#fff'}}}, plugins:{legend:{labels:{color:'#fff'}}} } });
         }catch(e){ console.error('Gagal memuat gabungan data', e); }
       }
       load();
       setInterval(load, 60000);
     })();
   </script>
-
   <script>
-    // Tambah prediksi 12 langkah (Gabung 12 historis + 12 prediksi ke 1 grafik)
     (function(){
-      const CLS = 'buaran';
+      const CLS = 'cilliwung';
       function fmtHour(ts){ const d=new Date(ts*1000); return String(d.getHours()).padStart(2,'0'); }
       function parseJsonish(txt){ if(!txt||typeof txt!=='string')return null; let t=txt.trim(); t=t.replace(/^```\s*json\s*/i,'').replace(/^```\s*/i,''); t=t.replace(/```\s*$/i,''); try{ return JSON.parse(t);}catch(e){ return null; } }
-
       async function loadCombined(){
         try{
           const res = await fetch(`/api/data?cls=${CLS}&limit=12`);
           const rows = await res.json();
-          const histDesc = Array.isArray(rows)? rows.slice(0,12) : [];
-          const hist = histDesc.slice().reverse();
-
-          let pred = null;
-          try{ const r2 = await fetch('/api/prediction/latest'); const j2 = await r2.json(); pred = j2.data || parseJsonish(j2.text);}catch(e){}
-          if(!pred){ try{ await fetch('/get/response'); const r3 = await fetch('/api/prediction/latest'); const j3 = await r3.json(); pred = j3.data || parseJsonish(j3.text);}catch(e){} }
-          const next = (pred && pred[CLS] && Array.isArray(pred[CLS].next_voltage)) ? pred[CLS].next_voltage.slice(0,12) : [];
-
-          const histVals = hist.map(r=>r.voltage);
+          const hist = (Array.isArray(rows)? rows.slice(0,12):[]).slice().reverse();
+          let pred=null; try{ const r2=await fetch('/api/prediction/latest'); const j2=await r2.json(); pred=j2.data||parseJsonish(j2.text);}catch(e){}
+          if(!pred){ try{ await fetch('/get/response'); const r3=await fetch('/api/prediction/latest'); const j3=await r3.json(); pred=j3.data||parseJsonish(j3.text);}catch(e){} }
+          const next=(pred&&pred[CLS]&&Array.isArray(pred[CLS].next_voltage))? pred[CLS].next_voltage.slice(0,12):[];
+          if(!window.vChart){ const ctx=document.getElementById('vChart'); if(ctx){ window.vChart=new Chart(ctx,{ type:'line', data:{ labels:[], datasets:[ {label:'Aktual (V)',data:[],borderColor:'#00c6ff',backgroundColor:'rgba(0,198,255,0.18)',fill:true,tension:0.3}, {label:'Prediksi (V)',data:[],borderColor:'#ff9800',backgroundColor:'rgba(255,152,0,0.12)',fill:true,tension:0.3,borderDash:[6,4]} ] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ticks:{color:'#fff'}}, x:{ticks:{color:'#fff'}}}, plugins:{legend:{labels:{color:'#fff'}}}} }); } }
+          if(!window.vChart) return;
           const labels = hist.map(r=>fmtHour(r.ts));
+          const histVals = hist.map(r=>r.voltage);
           const lastTs = hist.length? hist[hist.length-1].ts : Math.floor(Date.now()/1000);
           for(let i=1;i<=12;i++){ labels.push(fmtHour(lastTs + i*3600)); }
-
-          function apply(){
-            if (!window.vChart) return false;
-            try{
-              window.vChart.data.labels = labels;
-              const actualVals = histVals.concat(Array(12).fill(null));
-              const forecastVals = Array(histVals.length).fill(null).concat(next.map(Number));
-              if (window.vChart.data.datasets.length === 1){
-                window.vChart.data.datasets[0].label = 'Aktual (V)';
-                window.vChart.data.datasets[0].data = actualVals;
-                window.vChart.data.datasets.push({ label:'Prediksi (V)', data: forecastVals, borderColor:'#66e3ff', backgroundColor:'rgba(102,227,255,0.12)', fill:true, tension:0.3, borderDash:[6,4] });
-              } else {
-                window.vChart.data.datasets[0].data = actualVals;
-                window.vChart.data.datasets[1].data = forecastVals;
-              }
-              window.vChart.update();
-              return true;
-            }catch(e){ return false; }
-          }
-
-          // tunggu hingga chart dibuat oleh script sebelumnya
-          let tries = 0; const iv = setInterval(()=>{ if(apply()|| ++tries>30) clearInterval(iv); }, 200);
+          window.vChart.data.labels = labels;
+          window.vChart.data.datasets[0].data = histVals.concat(Array(12).fill(null));
+          window.vChart.data.datasets[1].data = Array(histVals.length).fill(null).concat(next.map(Number));
+          window.vChart.update();
         }catch(e){ /* ignore */ }
       }
-
       loadCombined();
       setInterval(loadCombined, 60000);
     })();
   </script>
 
+
 </body>
 </html>
+
+
+
+
+
+

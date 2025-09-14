@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoltStream — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+    }
+    header {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 1rem;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      background: #555;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #fff;
+    }
+
+    /* Sambutan & identitas */
+    .welcome {
+      padding: 1rem;
+    }
+    .welcome p {
+      margin: 0.2rem 0;
+    }
+    .welcome .hi {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    .welcome .instansi {
+      font-weight: 800;
+      font-size: 1.4rem;
+    }
+    .welcome .app {
+      font-weight: 300;
+      font-size: 0.9rem;
+    }
+
+    /* Card energi */
+    .energy-card {
+      margin: 1rem;
+      padding: 1.5rem;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #7b2ff7, #00c6ff);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .energy-left h1 {
+      font-size: 2rem;
+      margin: 0;
+      font-weight: bold;
+    }
+    .energy-left p {
+      margin: 0.3rem 0;
+      font-size: 1rem;
+    }
+    .energy-right {
+      text-align: right;
+    }
+    .energy-right img {
+      width: 50px;
+      border-radius: 50%;
+      background: #fff;
+    }
+    .energy-right p {
+      margin: 0.3rem 0 0 0;
+      font-size: 0.9rem;
+    }
+
+    /* Menu utama */
+    .menu {
+      display: flex;
+      justify-content: space-around;
+      padding: 1rem;
+      text-align: center;
+    }
+    .menu-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+    .menu-item i {
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+
+    /* Search bar */
+    .search {
+      margin: 1rem;
+      display: flex;
+      align-items: center;
+      background: #222;
+      border-radius: 12px;
+      padding: 0.5rem 1rem;
+    }
+    .search input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #ccc;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .filter {
+      background: #444;
+      padding: 0.4rem;
+      border-radius: 8px;
+      margin-left: 0.5rem;
+    }
+
+    /* Transaction */
+    .transaction-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 1rem;
+      margin-top: 1rem;
+    }
+    .transaction-header h3 {
+      margin: 0;
+    }
+    .transaction-list {
+      margin: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .transaction-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #111;
+      padding: 1rem;
+      border-radius: 12px;
+    }
+    .transaction-info {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .icon-sungai {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .transaction-info p {
+      margin: 0;
+    }
+    .status {
+      font-size: 0.8rem;
+    }
+    .status.aktif { color: #4caf50; }
+    .status.pasif { color: #f44336; }
+    .status.rendah { color: #ffc107; }
+    .detail-btn {
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* Bottom nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #7b2ff7, #00c6ff);
+      border-radius: 30px;
+      display: flex;
+      justify-content: space-around;
+      padding: 0.6rem 1.2rem;
+      width: 90%;
+      max-width: 400px;
+    }
+    .bottom-item {
+      text-align: center;
+      font-size: 0.7rem;
+    }
+    .bottom-item i {
+      display: block;
+      font-size: 1.3rem;
+    }
+  </style>
+  <!-- pake icon font -->
+  <script src="https://kit.fontawesome.com/yourkitid.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="avatar"><i class="fas fa-user"></i></div>
+  </header>
+
+  <!-- Sambutan -->
+  <div class="welcome">
+    <p class="hi">Selamat datang</p>
+    <p class="instansi">Pemerintah Daerah Provinsi Jakarta</p>
+    <p class="app">VoltStream</p>
+  </div>
+
+  <!-- Energi Card -->
+  <div class="energy-card">
+    <div class="energy-left">
+      <h1>2500 Watt</h1>
+      <p>+ 1200 Watt dari minggu lalu</p>
+    </div>
+    <div class="energy-right">
+      <!-- <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Coat_of_arms_of_Jakarta.svg" alt="Logo DKI"> -->
+      <p>DKI Jakarta, Jakarta Timur</p>
+    </div>
+  </div>
+
+  <!-- Menu utama -->
+  <div class="menu">
+    <div class="menu-item"><i class="fas fa-calendar"></i><span>Rekomendasi Pintar</span></div>
+    <div class="menu-item"><i class="fas fa-file-alt"></i><span>Lapor</span></div>
+    <div class="menu-item"><i class="fas fa-chart-bar"></i><span>Grafik</span></div>
+    <div class="menu-item"><i class="fas fa-map-pin"></i><span>Peta</span></div>
+    <div class="menu-item"><i class="fas fa-ellipsis-h"></i><span>Pengaturan</span></div>
+  </div>
+
+  <!-- Search bar -->
+  <div class="search">
+    <input type="text" placeholder="Search here">
+    <div class="filter"><i class="fas fa-sliders-h"></i></div>
+  </div>
+
+  <!-- Transaction -->
+  <div class="transaction-header">
+    <h3>Transaction</h3>
+    <small>Sort by Name (A-Z)</small>
+  </div>
+  <div class="transaction-list">
+    <div class="transaction-item">
+      <div class="transaction-info">
+        <div class="icon-sungai"><i class="fas fa-water"></i></div>
+        <div>
+          <p><b>Sungai Buaran</b></p>
+          <p class="status aktif">Aktif</p>
+        </div>
+      </div>
+      <div>
+        <p>1500 Watt</p>
+        <button class="detail-btn">Detail</button>
+      </div>
+    </div>
+
+    <div class="transaction-item">
+      <div class="transaction-info">
+        <div class="icon-sungai"><i class="fas fa-water"></i></div>
+        <div>
+          <p><b>Sungai Cakung</b></p>
+          <p class="status pasif">Pasif</p>
+        </div>
+      </div>
+      <div>
+        <p>0 Watt</p>
+        <button class="detail-btn">Detail</button>
+      </div>
+    </div>
+
+    <div class="transaction-item">
+      <div class="transaction-info">
+        <div class="icon-sungai"><i class="fas fa-water"></i></div>
+        <div>
+          <p><b>Sungai Cipinang</b></p>
+          <p class="status aktif">Aktif</p>
+        </div>
+      </div>
+      <div>
+        <p>1200 Watt</p>
+        <button class="detail-btn">Detail</button>
+      </div>
+    </div>
+
+    <div class="transaction-item">
+      <div class="transaction-info">
+        <div class="icon-sungai"><i class="fas fa-water"></i></div>
+        <div>
+          <p><b>Sungai Kalimalang</b></p>
+          <p class="status rendah">Penghasilan Rendah</p>
+        </div>
+      </div>
+      <div>
+        <p>300 Watt</p>
+        <button class="detail-btn">Detail</button>
+      </div>
+    </div>
+
+    <div class="transaction-item">
+      <div class="transaction-info">
+        <div class="icon-sungai"><i class="fas fa-water"></i></div>
+        <div>
+          <p><b>Sungai Sunter</b></p>
+          <p class="status pasif">Pasif</p>
+        </div>
+      </div>
+      <div>
+        <p>0 Watt</p>
+        <button class="detail-btn">Detail</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
+    <div class="bottom-item"><a href="grafik.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
+    <div class="bottom-item"><a href="peta.html"><i class="fas fa-map-pin"></i><span>Peta</span></a></div>
+    <div class="bottom-item"><a href="feedback.html"><i class="fas fa-user"></i><span>Feedback</span></a></div>
+  </div>
+</body>
+
+<script>
+  // ambil semua tombol dengan class "detail-btn"
+  document.querySelectorAll(".detail-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      // otomatis ikut domain yg sedang dipakai
+      window.location.href = "/vol/detail.html";
+    });
+  });
+</script>
+
+<script>
+  // Listener: saat tombol/elemen dengan class "fdbck" diklik, pindah ke feedback.html
+  document.addEventListener('click', (ev) => {
+    const target = ev.target.closest('.fdbck');
+    if (target) {
+      ev.preventDefault();
+      window.location.href = 'feedback.html';
+    }
+  });
+</script>
+</html>
+

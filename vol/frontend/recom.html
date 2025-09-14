@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoltStream — Rekomendasi</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin:0; font-family:"Segoe UI",sans-serif; background:#0a0a0a; color:#fff; }
+    header { padding:1rem; font-weight:700; font-size:1.2rem; }
+    .card{ margin:1rem; background:#111; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); overflow:hidden; }
+    .card-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; gap:10px; }
+    .name{ font-weight:800; font-size:1.05rem; }
+    .analysis{ color:#d7d7d7; padding:0 14px 12px 14px; font-size:.98rem; line-height:1.35; }
+    .chart-wrap{ padding:0 12px 14px 12px; }
+    canvas{ width:100% !important; height:220px !important; display:block; }
+    /* Bottom nav seperti dashboard */
+    .bottom-nav { position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+      background:linear-gradient(135deg,#7b2ff7,#00c6ff); border-radius:30px; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:0.7rem 1.1rem; width:88%; max-width:400px; }
+    .bottom-item { text-align:center; font-size:0.7rem; flex:1; }
+    .bottom-nav a { color:#fff; text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:2px; text-shadow:0 1px 1px rgba(0,0,0,.25); }
+    .bottom-nav a span { font-size:0.95rem; font-weight:700; letter-spacing:.2px; }
+    .bottom-nav a i { font-size:1.35rem; }
+    .spacer{ height:120px; }
+  </style>
+</head>
+<body>
+  <header>Rekomendasi Pintar</header>
+
+  <section id="cards"></section>
+
+  <div class="spacer" aria-hidden="true"></div>
+
+  <div class="bottom-nav">
+    <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
+    <div class="bottom-item"><a href="graph.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
+    <div class="bottom-item"><a href="map.html"><i class="fas fa-location-dot"></i><span>Peta</span></a></div>
+    <div class="bottom-item"><a href="feedback.html"><i class="fas fa-user"></i><span>Feedback</span></a></div>
+  </div>
+
+  <script>
+    const rivers = ['buaran','cakung','cilliwung','kalimalang','sunter'];
+    const labels = { buaran:'Buaran', cakung:'Cakung', cilliwung:'Cilliwung', kalimalang:'Kalimalang', sunter:'Sunter' };
+
+    function buildCard(cls){
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML = `
+        <div class="card-head">
+          <div class="name">${labels[cls] || cls}</div>
+          <div style="opacity:.8; font-size:0.9rem">Prediksi 12 langkah</div>
+        </div>
+        <div class="analysis" id="a-${cls}">Memuat rekomendasi...</div>
+        <div class="chart-wrap"><canvas id="c-${cls}"></canvas></div>
+      `;
+      return el;
+    }
+
+    function buildChart(canvasId, color){
+      const ctx = document.getElementById(canvasId);
+      return new Chart(ctx, {
+        type: 'line',
+        data: { labels: Array.from({length:12},(_,i)=>String(i+1)), datasets: [{ label:'Prediksi (V)', data: [], borderColor: color, backgroundColor:'rgba(123,47,247,0.18)', fill:true, tension:.3 }]},
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ ticks:{ color:'#fff' }}, x:{ ticks:{ color:'#fff' }}}, plugins:{ legend:{ labels:{ color:'#fff' }}}}
+      });
+    }
+
+    const charts = {};
+    (function mount(){
+      const container = document.getElementById('cards');
+      rivers.forEach((r, idx)=>{
+        const card = buildCard(r); container.appendChild(card);
+        const colors = ['#00c6ff','#66e3ff','#8bd3ff','#58b7ff','#3aa0ff'];
+        charts[r] = buildChart('c-'+r, colors[idx % colors.length]);
+      });
+    })();
+
+    // Helper to extract JSON even if wrapped with ```json ... ``` fences
+    function parseJsonish(txt){
+      if (!txt || typeof txt !== 'string') return null;
+      let t = txt.trim();
+      t = t.replace(/^```\s*json\s*/i, '').replace(/^```\s*/i, '');
+      t = t.replace(/```\s*$/i, '');
+      try { return JSON.parse(t); } catch(e){ return null; }
+    }
+
+    async function fetchPrediction(){
+      // Coba trigger prediksi baru; jika gagal, fallback ke latest
+      try{
+        const res = await fetch('/get/response');
+        const js = await res.json();
+        if (js && js.prediction){
+          const parsed = parseJsonish(js.prediction) || js.data || null;
+          if (parsed) return parsed;
+        }
+      }catch(e){}
+      try{
+        const res2 = await fetch('/api/prediction/latest');
+        const js2 = await res2.json();
+        if(js2 && js2.data) return js2.data;
+        if(js2 && js2.text){
+          const parsed = parseJsonish(js2.text);
+          if (parsed) return parsed;
+        }
+      }catch(e){}
+      return null;
+    }
+
+    async function refresh(){
+      const data = await fetchPrediction();
+      if(!data) return;
+      function seriesOf(node){
+        if (!node) return [];
+        if (Array.isArray(node.next_voltage)) return node.next_voltage;
+        if (Array.isArray(node.nextVoltages)) return node.nextVoltages;
+        if (Array.isArray(node.predictions)) return node.predictions;
+        return [];
+      }
+      function fmtEpochs(txt){
+        if(!txt) return txt;
+        return txt.replace(/\b(\d{10,13})\b/g, (m)=>{
+          let ms = Number(m);
+          if (m.length === 10) ms *= 1000;
+          const d = new Date(ms);
+          const opts = { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' };
+          return d.toLocaleString('id-ID', opts).replace(',', '').replace(':', '.');
+        });
+      }
+      rivers.forEach(r=>{
+        const a = document.getElementById('a-'+r);
+        const ch = charts[r];
+        const node = data[r] || {};
+        const analysisRaw = node.analysis || node.description || node.recommendation || 'No data';
+        const analysis = fmtEpochs(analysisRaw);
+        const series = seriesOf(node);
+        if(a) a.textContent = analysis;
+        if(ch){ ch.data.datasets[0].data = series.map(Number); ch.update(); }
+      });
+    }
+
+    refresh();
+    setInterval(refresh, 60000);
+  </script>
+</body>
+</html>

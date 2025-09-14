@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VoltStream - Detail Sungai Cipinang</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { margin:0; font-family:"Segoe UI",sans-serif; background:#0a0a0a; color:#fff; }
@@ -18,13 +19,13 @@
     .bottom-nav a span { font-size:0.95rem; font-weight:700; letter-spacing:.2px; }
     .bottom-nav a i { font-size:1.35rem; }
   </style>
-  <script src="https://kit.fontawesome.com/yourkitid.js" crossorigin="anonymous"></script>
   </head>
 <body>
   <header>Detail Sungai Cilliwung</header>
 
 <!-- Sungai / Kali Ciliwung -->
 <div class="card">
+  <!--
   <iframe
     src="https://www.google.com/maps?q=-6.121361,106.8289672&hl=id&z=17&output=embed"
     width="100%"
@@ -33,15 +34,19 @@
     allowfullscreen=""
     loading="lazy">
   </iframe>
+  -->
+  <img src="cilliwung.jpg" alt="Peta Sungai Cilliwung" style="width:100%; height:250px; object-fit:cover; border-radius:8px;" />
 </div>
 
 
   <div class="card">
-    <div class="row"><span>Tegangan</span><span>2.1 V</span></div>
-    <div class="row"><span>Arus</span><span>0.57 A</span></div>
-    <div class="row"><span>Daya</span><span>120 W</span></div>
-    <div class="row"><span>Emisi yang dikurangi</span><span>1 ton CO2E</span></div>
-    <div class="row"><span>Update Terakhir</span><span>3 menit lalu</span></div>
+    <div class="row"><span>Tegangan</span><span id="voltVal">-</span></div>
+    <div class="row"><span>Arus</span><span id="ampVal">-</span></div>
+    <div class="row"><span>Daya</span><span id="powerVal">-</span></div>
+    <div class="row"><span>Emisi yang dikurangi</span><span id="co2eVal">-</span></div>
+    <div class="row"><span>Temperature</span><span id="tempVal">-</span></div>
+    <div class="row"><span>Kelembapan</span><span id="humidVal">-</span></div>
+    <div class="row"><span>Update Terakhir</span><span id="updatedAgo">-</span></div>
   </div>
 
   <div class="card">
@@ -51,9 +56,12 @@
     </div>
   </div>
 
+  <div aria-hidden="true" style="height: 70px; pointer-events:none;"></div>
+
   <div class="bottom-nav">
     <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
-    <div class="bottom-item"><a href="grafik.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
+    <div class="bottom-item"><a href="graph.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
+    <div class="bottom-item"><a href="map.html"><i class="fas fa-location-dot"></i><span>Peta</span></a></div>
     <div class="bottom-item"><a href="feedback.html"><i class="fas fa-user"></i><span>Feedback</span></a></div>
   </div>
 
@@ -71,9 +79,22 @@
     }
     async function loadData(){
       try {
-        const res = await fetch('/api/data');
+        const res = await fetch('/api/data?cls=cilliwung');
         const rows = await res.json();
         const ordered = rows.slice().reverse();
+        if (Array.isArray(rows) && rows.length){
+          const newest = rows[0];
+          const t = document.getElementById('tempVal');
+          const h = document.getElementById('humidVal');
+          const u = document.getElementById('updatedAgo');
+          if (t && newest.temp != null) t.textContent = `${Number(newest.temp).toFixed(1)} °C`;
+          if (h && newest.humid != null) h.textContent = `${Number(newest.humid).toFixed(0)} %`;
+          if (u && newest.ts != null){
+            const now = Math.floor(Date.now()/1000);
+            const mins = Math.max(0, Math.floor((now - Number(newest.ts))/60));
+            u.textContent = `${mins} menit lalu`;
+          }
+        }
         ensureChart();
         if (vChart){
           function formatJam(ts){ const d = new Date(ts*1000); return String(d.getHours()).padStart(2,'0'); }
@@ -87,7 +108,95 @@
     setInterval(loadData, 30000);
   </script>
 
+  <script>
+    // Update info box with latest data (single fetch, independent of chart logic)
+    (async function(){
+      try{
+        const res = await fetch('/api/data?cls=cilliwung&limit=1');
+        const rows = await res.json();
+        const latest = Array.isArray(rows) && rows.length ? rows[0] : null;
+        if(!latest) return;
+        const fmt = (n,u,d=2)=> (n==null||Number.isNaN(+n))? '-' : `${Number(n).toFixed(d)} ${u}`;
+        const set = (id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent = txt; };
+        set('voltVal', fmt(latest.voltage,'V',1));
+        set('ampVal', fmt(latest.ampere,'A',2));
+        let p = latest.power; if((p==null||Number.isNaN(+p)) && latest.voltage!=null && latest.ampere!=null){ p = Number(latest.voltage)*Number(latest.ampere); }
+        set('powerVal', fmt(p,'W',0));
+        set('co2eVal', fmt(latest.co2e,'ton CO2E',2));
+        set('tempVal', fmt(latest.temp,'°C',1));
+        set('humidVal', fmt(latest.humid,'%',0));
+        if(latest.ts!=null){ const now=Math.floor(Date.now()/1000); const mins=Math.max(0,Math.floor((now-Number(latest.ts))/60)); set('updatedAgo', `${mins} menit lalu`); }
+      }catch(e){ /* ignore */ }
+    })();
+  </script>
+
+  <script>
+    // Combined chart: 12 historical (blue) + 12 predicted (orange)
+    (function(){
+      const CLS = 'cilliwung';
+      const ctx = document.getElementById('vChart');
+      function fmtHour(ts){ const d=new Date(ts*1000); return String(d.getHours()).padStart(2,'0'); }
+      function parseJsonish(txt){ if(!txt||typeof txt!=='string')return null; let t=txt.trim(); t=t.replace(/^```\s*json\s*/i,'').replace(/^```\s*/i,''); t=t.replace(/```\s*$/i,''); try{ return JSON.parse(t);}catch(e){ return null; } }
+
+      async function load(){
+        try{
+          try{ await fetch('/get/response'); }catch(e){}
+          const res = await fetch(`/api/data?cls=${CLS}&limit=12`);
+          const rows = await res.json();
+          const hist = (Array.isArray(rows)? rows.slice(0,12):[]).slice().reverse();
+          let pred=null; try{ const j=await (await fetch('/api/prediction/latest')).json(); pred=j.data||parseJsonish(j.text);}catch(e){}
+          const next=(pred&&pred[CLS]&&Array.isArray(pred[CLS].next_voltage))? pred[CLS].next_voltage.slice(0,12).map(Number):[];
+          const labels = hist.map(r=>fmtHour(r.ts));
+          const lastTs = hist.length? hist[hist.length-1].ts : Math.floor(Date.now()/1000);
+          for(let i=1;i<=12;i++){ labels.push(fmtHour(lastTs + i*3600)); }
+          const existing = (Chart.getChart ? Chart.getChart(ctx) : null); if(existing) existing.destroy();
+          new Chart(ctx, { type:'line', data:{ labels, datasets:[
+            { label:'Aktual (V)', data: hist.map(r=>r.voltage).concat(Array(12).fill(null)), borderColor:'#00c6ff', backgroundColor:'rgba(0,198,255,0.18)', fill:true, tension:0.3 },
+            { label:'Prediksi (V)', data: Array(hist.length).fill(null).concat(next), borderColor:'#ff9800', backgroundColor:'rgba(255,152,0,0.12)', fill:true, tension:0.3, borderDash:[6,4] }
+          ]}, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ticks:{color:'#fff'}}, x:{ticks:{color:'#fff'}}}, plugins:{legend:{labels:{color:'#fff'}}} } });
+        }catch(e){ console.error('Gagal memuat gabungan data', e); }
+      }
+      load();
+      setInterval(load, 60000);
+    })();
+  </script>
+  <script>
+    (function(){
+      const CLS = 'cilliwung';
+      function fmtHour(ts){ const d=new Date(ts*1000); return String(d.getHours()).padStart(2,'0'); }
+      function parseJsonish(txt){ if(!txt||typeof txt!=='string')return null; let t=txt.trim(); t=t.replace(/^```\s*json\s*/i,'').replace(/^```\s*/i,''); t=t.replace(/```\s*$/i,''); try{ return JSON.parse(t);}catch(e){ return null; } }
+      async function loadCombined(){
+        try{
+          const res = await fetch(`/api/data?cls=${CLS}&limit=12`);
+          const rows = await res.json();
+          const hist = (Array.isArray(rows)? rows.slice(0,12):[]).slice().reverse();
+          let pred=null; try{ const r2=await fetch('/api/prediction/latest'); const j2=await r2.json(); pred=j2.data||parseJsonish(j2.text);}catch(e){}
+          if(!pred){ try{ await fetch('/get/response'); const r3=await fetch('/api/prediction/latest'); const j3=await r3.json(); pred=j3.data||parseJsonish(j3.text);}catch(e){} }
+          const next=(pred&&pred[CLS]&&Array.isArray(pred[CLS].next_voltage))? pred[CLS].next_voltage.slice(0,12):[];
+          if(!window.vChart){ const ctx=document.getElementById('vChart'); if(ctx){ window.vChart=new Chart(ctx,{ type:'line', data:{ labels:[], datasets:[ {label:'Aktual (V)',data:[],borderColor:'#00c6ff',backgroundColor:'rgba(0,198,255,0.18)',fill:true,tension:0.3}, {label:'Prediksi (V)',data:[],borderColor:'#ff9800',backgroundColor:'rgba(255,152,0,0.12)',fill:true,tension:0.3,borderDash:[6,4]} ] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ticks:{color:'#fff'}}, x:{ticks:{color:'#fff'}}}, plugins:{legend:{labels:{color:'#fff'}}}} }); } }
+          if(!window.vChart) return;
+          const labels = hist.map(r=>fmtHour(r.ts));
+          const histVals = hist.map(r=>r.voltage);
+          const lastTs = hist.length? hist[hist.length-1].ts : Math.floor(Date.now()/1000);
+          for(let i=1;i<=12;i++){ labels.push(fmtHour(lastTs + i*3600)); }
+          window.vChart.data.labels = labels;
+          window.vChart.data.datasets[0].data = histVals.concat(Array(12).fill(null));
+          window.vChart.data.datasets[1].data = Array(histVals.length).fill(null).concat(next.map(Number));
+          window.vChart.update();
+        }catch(e){ /* ignore */ }
+      }
+      loadCombined();
+      setInterval(loadCombined, 60000);
+    })();
+  </script>
+
 
 </body>
 </html>
+
+
+
+
+
+
 

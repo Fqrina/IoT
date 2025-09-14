@@ -1,0 +1,462 @@
+    1: <!DOCTYPE html>
+    2: <html lang="id">
+    3: <head>
+    4:   <meta charset="UTF-8">
+    5:   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    6:   <title>VoltStream — Dashboard</title>
+    7:   <link rel="stylesheet" href="style.css">
+    8:   <style>
+    9:     body {
+   10:       margin: 0;
+   11:       font-family: "Segoe UI", sans-serif;
+   12:       background: #0a0a0a;
+   13:       color: #fff;
+   14:     }
+   15:     header {
+   16:       display: flex;
+   17:       justify-content: flex-end;
+   18:       align-items: center;
+   19:       padding: 1rem;
+   20:     }
+   21:     .avatar {
+   22:       width: 40px;
+   23:       height: 40px;
+   24:       background: #555;
+   25:       border-radius: 50%;
+   26:       display: flex;
+   27:       align-items: center;
+   28:       justify-content: center;
+   29:       font-size: 1.2rem;
+   30:       color: #fff;
+   31:     }
+   32: 
+   33:     /* Sambutan & identitas */
+   34:     .welcome {
+   35:       padding: 1rem;
+   36:     }
+   37:     .welcome p {
+   38:       margin: 0.2rem 0;
+   39:     }
+   40:     .welcome .hi {
+   41:       font-weight: bold;
+   42:       font-size: 1.1rem;
+   43:     }
+   44:     .welcome .instansi {
+   45:       font-weight: 800;
+   46:       font-size: 1.4rem;
+   47:     }
+   48:     .welcome .app {
+   49:       font-weight: 300;
+   50:       font-size: 0.9rem;
+   51:     }
+   52: 
+   53:     /* Card energi */
+   54:     .energy-card {
+   55:       margin: 1rem;
+   56:       padding: 1.5rem;
+   57:       border-radius: 20px;
+   58:       background: linear-gradient(135deg, #7b2ff7, #00c6ff);
+   59:       display: flex;
+   60:       justify-content: space-between;
+   61:       align-items: center;
+   62:     }
+   63:     .energy-left h1 {
+   64:       font-size: 2rem;
+   65:       margin: 0;
+   66:       font-weight: bold;
+   67:     }
+   68:     .energy-left p {
+   69:       margin: 0.3rem 0;
+   70:       font-size: 1rem;
+   71:     }
+   72:     .energy-right {
+   73:       text-align: right;
+   74:     }
+   75:     .energy-right img {
+   76:       width: 50px;
+   77:       border-radius: 50%;
+   78:       background: #fff;
+   79:     }
+   80:     .energy-right p {
+   81:       margin: 0.3rem 0 0 0;
+   82:       font-size: 0.9rem;
+   83:     }
+   84: 
+   85:     /* Menu utama */
+   86:     .menu {
+   87:       display: flex;
+   88:       justify-content: space-around;
+   89:       padding: 1rem;
+   90:       text-align: center;
+   91:     }
+   92:     .menu-item {
+   93:       display: flex;
+   94:       flex-direction: column;
+   95:       align-items: center;
+   96:       font-size: 0.8rem;
+   97:     }
+   98:     .menu-item i {
+   99:       font-size: 1.4rem;
+  100:       margin-bottom: 0.3rem;
+  101:     }
+  102: 
+  103:     /* Search bar */
+  104:     .search {
+  105:       margin: 1rem;
+  106:       display: flex;
+  107:       align-items: center;
+  108:       background: #222;
+  109:       border-radius: 12px;
+  110:       padding: 0.5rem 1rem;
+  111:     }
+  112:     .search input {
+  113:       flex: 1;
+  114:       background: transparent;
+  115:       border: none;
+  116:       color: #ccc;
+  117:       font-size: 0.9rem;
+  118:       outline: none;
+  119:     }
+  120:     .filter {
+  121:       background: #444;
+  122:       padding: 0.4rem;
+  123:       border-radius: 8px;
+  124:       margin-left: 0.5rem;
+  125:     }
+  126: 
+  127:     /* Transaction */
+  128:     .transaction-header {
+  129:       display: flex;
+  130:       justify-content: space-between;
+  131:       padding: 0 1rem;
+  132:       margin-top: 1rem;
+  133:     }
+  134:     .transaction-header h3 {
+  135:       margin: 0;
+  136:     }
+  137:     .transaction-list {
+  138:       margin: 1rem;
+  139:       display: flex;
+  140:       flex-direction: column;
+  141:       gap: 1rem;
+  142:     }
+  143:     .transaction-item {
+  144:       display: flex;
+  145:       justify-content: space-between;
+  146:       align-items: center;
+  147:       background: #111;
+  148:       padding: 1rem;
+  149:       border-radius: 12px;
+  150:     }
+  151:     .transaction-info {
+  152:       display: flex;
+  153:       align-items: center;
+  154:       gap: 0.8rem;
+  155:     }
+  156:     .icon-sungai {
+  157:       width: 40px;
+  158:       height: 40px;
+  159:       border-radius: 50%;
+  160:       background: #444;
+  161:       display: flex;
+  162:       align-items: center;
+  163:       justify-content: center;
+  164:     }
+  165:     .transaction-info p {
+  166:       margin: 0;
+  167:     }
+  168:     .status {
+  169:       font-size: 0.8rem;
+  170:     }
+  171:     .status.aktif { color: #4caf50; }
+  172:     .status.pasif { color: #f44336; }
+  173:     .status.rendah { color: #ffc107; }
+  174:     .detail-btn {
+  175:       background: #333;
+  176:       color: #fff;
+  177:       border: none;
+  178:       padding: 0.5rem 1rem;
+  179:       border-radius: 8px;
+  180:       cursor: pointer;
+  181:     }
+  182: 
+  183:     /* Bottom nav */
+  184:     .bottom-nav {
+  185:       position: fixed;
+  186:       bottom: 22px; /* lebih naik ke atas */
+  187:       left: 50%;
+  188:       transform: translateX(-50%);
+  189:       background: linear-gradient(135deg, #7b2ff7, #00c6ff);
+  190:       border-radius: 30px;
+  191:       display: flex;
+  192:       justify-content: space-between; /* kurangi jarak antar item */
+  193:       align-items: center;
+  194:       gap: 8px;
+  195:       padding: 0.5rem 0.9rem; /* lebih rapat */
+  196:       width: 88%;
+  197:       max-width: 400px;
+  198:     }
+  199:     .bottom-item { text-align: center; font-size: 0.7rem; flex: 1; }
+  200:     .bottom-item i {
+  201:       display: block;
+  202:       font-size: 1.3rem;
+  203:     }
+  204:     /* Styling link di bottom nav: biru, tanpa underline, proporsional */
+  205:     .bottom-nav a {
+  206:       color: #ffffff; /* lebih solid, tidak terlihat kabur */
+  207:       text-decoration: none;
+  208:       display: flex;
+  209:       flex-direction: column;
+  210:       align-items: center;
+  211:       gap: 2px; /* jarak ikon-teks dipendekkan */
+  212:       text-shadow: 0 1px 1px rgba(0,0,0,.25);
+  213:     }
+  214:     .bottom-nav a:hover { color: #e6f0ff; }
+  215:     .bottom-nav a:link, .bottom-nav a:visited { text-decoration: none; }
+  216:     .bottom-nav a span { font-size: 0.95rem; font-weight: 700; letter-spacing: .2px; }
+  217:     .bottom-nav a i { font-size: 1.35rem; }
+  218:   </style>
+  219:   <!-- pake icon font -->
+  220:   <script src="https://kit.fontawesome.com/yourkitid.js" crossorigin="anonymous"></script>
+  221: </head>
+  222: <body>
+  223:   <!-- Header -->
+  224:   <header>
+  225:     <div class="avatar"><i class="fas fa-user"></i></div>
+  226:   </header>
+  227: 
+  228:   <!-- Sambutan -->
+  229:   <div class="welcome">
+  230:     <p class="hi">Selamat datang</p>
+  231:     <p class="instansi">Pemerintah Daerah Provinsi Jakarta</p>
+  232:     <p class="app">VoltStream</p>
+  233:   </div>
+  234: 
+  235:   <!-- Energi Card -->
+  236:   <div class="energy-card">
+  237:     <div class="energy-left">
+  238:       <h1>2500 Watt</h1>
+  239:       <p>+ 1200 Watt dari minggu lalu</p>
+  240:     </div>
+  241:     <div class="energy-right">
+  242:       <!-- <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Coat_of_arms_of_Jakarta.svg" alt="Logo DKI"> -->
+  243:       <p>DKI Jakarta, Jakarta Timur</p>
+  244:     </div>
+  245:   </div>
+  246: 
+  247:   <!-- Menu utama -->
+  248:   <div class="menu">
+  249:     <div class="menu-item"><i class="fas fa-calendar"></i><span>Rekomendasi Pintar</span></div>
+  250:     <div class="menu-item"><i class="fas fa-file-alt"></i><span>Lapor</span></div>
+  251:     <div class="menu-item"><i class="fas fa-chart-bar"></i><span>Grafik</span></div>
+  252:     <div class="menu-item"><i class="fas fa-map-pin"></i><span>Peta</span></div>
+  253:     <div class="menu-item"><i class="fas fa-ellipsis-h"></i><span>Pengaturan</span></div>
+  254:   </div>
+  255: 
+  256:   <!-- Search bar -->
+  257:   <div class="search">
+  258:     <input type="text" placeholder="Search here">
+  259:     <div class="filter"><i class="fas fa-sliders-h"></i></div>
+  260:   </div>
+  261: 
+  262:   <!-- Transaction -->
+  263:   <div class="transaction-header">
+  264:     <h3>Transaction</h3>
+  265:     <small>Sort by Name (A-Z)</small>
+  266:   </div>
+  267:   <div class="transaction-list">
+  268:     <div class="transaction-item">
+  269:       <div class="transaction-info">
+  270:         <div class="icon-sungai"><i class="fas fa-water"></i></div>
+  271:         <div>
+  272:           <p><b>Sungai Buaran</b></p>
+  273:           <p class="status aktif">Aktif</p>
+  274:         </div>
+  275:       </div>
+  276:       <div>
+  277:         <p>1500 Watt</p>
+  278:         <button class="detail-btn">Detail</button>
+  279:       </div>
+  280:     </div>
+  281: 
+  282:     <div class="transaction-item">
+  283:       <div class="transaction-info">
+  284:         <div class="icon-sungai"><i class="fas fa-water"></i></div>
+  285:         <div>
+  286:           <p><b>Sungai Cakung</b></p>
+  287:           <p class="status pasif">Pasif</p>
+  288:         </div>
+  289:       </div>
+  290:       <div>
+  291:         <p>0 Watt</p>
+  292:         <button class="detail-btn">Detail</button>
+  293:       </div>
+  294:     </div>
+  295: 
+  296:     <div class="transaction-item">
+  297:       <div class="transaction-info">
+  298:         <div class="icon-sungai"><i class="fas fa-water"></i></div>
+  299:         <div>
+  300:           <p><b>Sungai Cipinang</b></p>
+  301:           <p class="status aktif">Aktif</p>
+  302:         </div>
+  303:       </div>
+  304:       <div>
+  305:         <p>1200 Watt</p>
+  306:         <button class="detail-btn">Detail</button>
+  307:       </div>
+  308:     </div>
+  309: 
+  310:     <div class="transaction-item">
+  311:       <div class="transaction-info">
+  312:         <div class="icon-sungai"><i class="fas fa-water"></i></div>
+  313:         <div>
+  314:           <p><b>Sungai Kalimalang</b></p>
+  315:           <p class="status rendah">Penghasilan Rendah</p>
+  316:         </div>
+  317:       </div>
+  318:       <div>
+  319:         <p>300 Watt</p>
+  320:         <button class="detail-btn">Detail</button>
+  321:       </div>
+  322:     </div>
+  323: 
+  324:     <div class="transaction-item">
+  325:       <div class="transaction-info">
+  326:         <div class="icon-sungai"><i class="fas fa-water"></i></div>
+  327:         <div>
+  328:           <p><b>Sungai Sunter</b></p>
+  329:           <p class="status pasif">Pasif</p>
+  330:         </div>
+  331:       </div>
+  332:       <div>
+  333:         <p>0 Watt</p>
+  334:         <button class="detail-btn">Detail</button>
+  335:       </div>
+  336:     </div>
+  337:   </div>
+  338: 
+  339:   <!-- Bottom Navigation -->
+  340:   <div class="bottom-nav">
+  341:     <div class="bottom-item"><a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></div>
+  342:     <div class="bottom-item"><a href="grafik.html"><i class="fas fa-chart-bar"></i><span>Grafik</span></a></div>
+  343:     <div class="bottom-item"><a href="feedback.html"><i class="fas fa-user"></i><span>Feedback</span></a></div>
+  344:   </div>
+  345: 
+  346:   <!-- Notifikasi popup (lebih besar) -->
+  347:   <div id="notif-popup" aria-live="polite" style="position:fixed; left:50%; bottom:18px; transform:translate(-50%, 140%); width:92%; max-width:520px; background:#1b1b1b; color:#fff; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.5); padding:18px 20px; z-index:9999; transition:transform .28s ease;">
+  348:     <div style="display:flex; align-items:flex-start; gap:12px;">
+  349:       <div style="flex:0 0 auto; width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#7b2ff7,#00c6ff); display:flex; align-items:center; justify-content:center; font-size:22px;">⚠️</div>
+  350:       <div style="flex:1 1 auto;">
+  351:         <div style="font-weight:800; font-size:1.05rem; line-height:1.2; margin-bottom:6px;">Pemberitahuan</div>
+  352:         <div id="notif-text" style="font-size:0.98rem; color:#e9e9e9;">Waktunya mengisi Lumpur</div>
+  353:       </div>
+  354:       <button id="notif-close" aria-label="Tutup notifikasi" style="flex:0 0 auto; background:transparent; color:#bbb; border:none; font-size:22px; line-height:1; cursor:pointer;">×</button>
+  355:     </div>
+  356:   </div>
+  357: 
+  358:   <!-- Notifikasi popup (baru, modal tengah) -->
+  359:   <div id="notif2-backdrop" style="position:fixed; inset:0; background:rgba(0,0,0,.45); opacity:0; pointer-events:none; z-index:9998; transition:opacity .25s ease;"></div>
+  360:   <div id="notif2-popup" aria-live="polite" style="position:fixed; left:50%; top:50%; transform:translate(-50%, -50%) scale(.96); opacity:0; pointer-events:none; width:92%; max-width:520px; min-height:110px; background:#1b1b1b; color:#fff; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.55); padding:22px 24px; z-index:9999; transition:transform .25s ease, opacity .25s ease;">
+  361:     <button id="notif2-close" aria-label="Tutup notifikasi" style="position:absolute; top:10px; right:12px; background:transparent; color:#e5e5e5; border:none; font-size:26px; line-height:1; cursor:pointer;">&times;</button>
+  362:     <div style="display:flex; align-items:flex-start; gap:14px;">
+  363:       <div class="notif-icon" style="flex:0 0 auto; width:56px; height:56px; border-radius:14px; background:linear-gradient(135deg,#7b2ff7,#00c6ff); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:900;">!</div>
+  364:       <div style="flex:1 1 auto;">
+  365:         <div style="font-weight:800; font-size:1.15rem; line-height:1.25; margin-bottom:8px;">Pemberitahuan</div>
+  366:         <div id="notif2-text" style="font-size:1.02rem; color:#e9e9e9;">Waktunya Mengisi Lumpur</div>
+  367:       </div>
+  368:     </div>
+  369:   </div>
+  370: </body>
+  371: 
+  372: <script>
+  373:   // ambil semua tombol dengan class "detail-btn"
+  374:   document.querySelectorAll(".detail-btn").forEach((btn) => {
+  375:     btn.addEventListener("click", () => {
+  376:       // otomatis ikut domain yg sedang dipakai
+  377:       window.location.href = "/vol/detail.html";
+  378:     });
+  379:   });
+  380: </script>
+  381: 
+  382: <script>
+  383:   // Listener: saat tombol/elemen dengan class "fdbck" diklik, pindah ke feedback.html
+  384:   document.addEventListener('click', (ev) => {
+  385:     const target = ev.target.closest('.fdbck');
+  386:     if (target) {
+  387:       ev.preventDefault();
+  388:       window.location.href = 'feedback.html';
+  389:     }
+  390:   });
+  391: </script>
+  392: 
+  393: <script>
+  394:   // fungsi global: panggil window.notif('pesan opsional') untuk menampilkan popup
+  395:   (function(){
+  396:     const popup = document.getElementById('notif2-popup');
+  397:     const backdrop = document.getElementById('notif2-backdrop');
+  398:     const txt = document.getElementById('notif2-text');
+  399:     const closeBtn = document.getElementById('notif2-close');
+  400: 
+  401:     function show(message){
+  402:       if (message) txt.textContent = message;
+  403:       // tampilkan modal tengah
+  404:       popup.style.opacity = '1';
+  405:       popup.style.pointerEvents = 'auto';
+  406:       popup.style.transform = 'translate(-50%, -50%) scale(1)';
+  407:       backdrop.style.opacity = '1';
+  408:       backdrop.style.pointerEvents = 'auto';
+  409:     }
+  410:     function hide(){
+  411:       popup.style.opacity = '0';
+  412:       popup.style.pointerEvents = 'none';
+  413:       popup.style.transform = 'translate(-50%, -50%) scale(.9)';
+  414:       backdrop.style.opacity = '0';
+  415:       backdrop.style.pointerEvents = 'none';
+  416:     }
+  417: 
+  418:     // expose ke global
+  419:     window.notif = function(message){ show(message || 'Waktunya Mengisi Lumpur'); };
+  420: 
+  421:     // close handler
+  422:     closeBtn.addEventListener('click', hide);
+  423:     backdrop.addEventListener('click', hide);
+  424: 
+  425:     // auto-trigger jika ada query ?notif=1 atau ?notif=pesan
+  426:     const usp = new URLSearchParams(location.search);
+  427:     if (usp.has('notif')){
+  428:       const msg = usp.get('notif');
+  429:       window.notif(msg && msg !== '1' ? decodeURIComponent(msg) : undefined);
+  430:     }
+  431:   })();
+  432:   // Contoh: notif('Waktunya mengisi Lumpur');
+  433: </script>
+  434: 
+  435: <script>
+  436:   // Auto trigger: cek /api/data tiap 5 detik; kalau voltage terbaru = 0, munculkan notif()
+  437:   (function(){
+  438:     let lastTs = null;
+  439:     async function checkZeroVoltage(){
+  440:       try {
+  441:         const res = await fetch('/api/data');
+  442:         if(!res.ok) return;
+  443:         const rows = await res.json();
+  444:         if(!Array.isArray(rows) || rows.length === 0) return;
+  445:         const newest = rows[0]; // /api/data sudah ORDER BY ts DESC
+  446:         if(newest && typeof newest.ts !== 'undefined'){
+  447:           if(newest.ts !== lastTs){
+  448:             lastTs = newest.ts;
+  449:             const v = Number(newest.voltage);
+  450:             if(!Number.isNaN(v) && v === 0){
+  451:               window.notif('Waktunya Mengisi Lumpur');
+  452:             }
+  453:           }
+  454:         }
+  455:       } catch(e) { /* ignore */ }
+  456:     }
+  457:     checkZeroVoltage();
+  458:     setInterval(checkZeroVoltage, 5000);
+  459:   })();
+  460:   // Catatan: notifikasi hanya trigger sekali per TS terbaru untuk menghindari spam
+  461: </script>
+  462: </html>

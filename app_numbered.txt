@@ -1,0 +1,254 @@
+   1: from fastapi import FastAPI
+   2: from pydantic import BaseModel, Field
+   3: import sqlite3, time
+   4: import os, json, time, sqlite3
+   5: import google.generativeai as genai
+   6: from fastapi.staticfiles import StaticFiles
+   7: from fastapi.responses import FileResponse, RedirectResponse
+   8: from fastapi import HTTPException
+   9: from urllib.parse import quote
+  10: 
+  11: 
+  12: GEMINI_KEY = os.getenv("GEMINI_API_KEY")  # <-- nama env var
+  13: gmodel = None
+  14: if GEMINI_KEY:
+  15:     genai.configure(api_key=GEMINI_KEY)
+  16:     gmodel = genai.GenerativeModel("gemini-1.5-flash")
+  17: else:
+  18:     gmodel = None
+  19: 
+  20: app = FastAPI()
+  21: app.mount("/static", StaticFiles(directory="static"), name="static")
+  22: # Serve the Volttrack frontend under /vol (allow index.html default)
+  23: app.mount("/vol", StaticFiles(directory="vol/frontend", html=True), name="vol")
+  24: 
+  25: DB = "sensor.db"
+  26: 
+  27: # Pemetaan multi-database per sungai/kelas
+  28: RIVER_DBS = {
+  29:     "buaran": "buaran.db",
+  30:     "cakung": "cakung.db",
+  31:     "cilliwung": "cilliwung.db",
+  32:     "kalimalang": "kalimalang.db",
+  33:     "sunter": "sunter.db",
+  34: }
+  35: 
+  36: VALID_RIVERS = set(RIVER_DBS.keys())
+  37: 
+  38: def norm_cls(val: str | None) -> str | None:
+  39:     if not val:
+  40:         return None
+  41:     v = val.strip().lower()
+  42:     # toleransi salah ketik umum
+  43:     fixes = {"ciliwung": "cilliwung", "cillliwung": "cilliwung"}
+  44:     v = fixes.get(v, v)
+  45:     return v if v in VALID_RIVERS else None
+  46: 
+  47: def home_page():
+  48:     return FileResponse("static/index.html")
+  49: 
+  50: 
+  51: 
+  52: # model JSON dari ESP32
+  53: class SensorIn(BaseModel):
+  54:     voltage: float
+  55:     temp: float
+  56:     humid: float
+  57:     ts: int | None = None
+  58:     # kelas sungai; menerima key JSON "class" juga
+  59:     cls: str | None = Field(default=None, alias="class")
+  60: 
+  61: # bikin tabel kalau belum ada
+  62: def init_db():
+  63:     # DB pusat lama tetap dibuat untuk kompatibilitas (prediction, dll)
+  64:     conn = sqlite3.connect(DB)
+  65:     cur = conn.cursor()
+  66:     cur.execute("""CREATE TABLE IF NOT EXISTS sensor(
+  67:         id INTEGER PRIMARY KEY AUTOINCREMENT,
+  68:         ts INTEGER,
+  69:         voltage REAL,
+  70:         temp REAL,
+  71:         humid REAL
+  72:     )""")
+  73:     conn.commit(); conn.close()
+  74: 
+  75:     # Buat tabel untuk setiap DB sungai
+  76:     for dbfile in RIVER_DBS.values():
+  77:         conn = sqlite3.connect(dbfile)
+  78:         cur = conn.cursor()
+  79:         cur.execute("""CREATE TABLE IF NOT EXISTS sensor(
+  80:             id INTEGER PRIMARY KEY AUTOINCREMENT,
+  81:             ts INTEGER,
+  82:             voltage REAL,
+  83:             temp REAL,
+  84:             humid REAL
+  85:         )""")
+  86:         conn.commit(); conn.close()
+  87: 
+  88: init_db()
+  89: 
+  90: # Redirect root to Volt frontend index
+  91: @app.get("/", include_in_schema=False)
+  92: def root():
+  93:     return RedirectResponse(url="/vol/index.html")
+  94: 
+  95: # Health check
+  96: @app.get("/api/health")
+  97: def health():
+  98:     return {"ok": True}
+  99: 
+ 100: # endpoint ESP32 POST data ke sini
+ 101: def _insert_reading(dbfile: str, ts: int, d: SensorIn):
+ 102:     conn = sqlite3.connect(dbfile)
+ 103:     cur = conn.cursor()
+ 104:     cur.execute(
+ 105:         "INSERT INTO sensor(ts, voltage, temp, humid) VALUES(?,?,?,?)",
+ 106:         (ts, d.voltage, d.temp, d.humid),
+ 107:     )
+ 108:     conn.commit(); conn.close()
+ 109: 
+ 110: @app.post("/esp32")
+ 111: def receive(d: SensorIn):
+ 112:     """Terima data dan tentukan DB berdasarkan field 'class' (alias cls)."""
+ 113:     ts = d.ts or int(time.time())
+ 114:     cls = norm_cls(d.cls)
+ 115:     if not cls:
+ 116:         # fallback: simpan di DB pusat lama juga agar tidak hilang
+ 117:         _insert_reading(DB, ts, d)
+ 118:         return {"ok": True, "ts": ts, "note": "No class specified; stored in sensor.db"}
+ 119:     _insert_reading(RIVER_DBS[cls], ts, d)
+ 120:     return {"ok": True, "ts": ts, "class": cls}
+ 121: 
+ 122: @app.post("/esp32/{cls}")
+ 123: def receive_to(cls: str, d: SensorIn):
+ 124:     """Endpoint alternatif: kelas di path, mis. /esp32/buaran"""
+ 125:     ts = d.ts or int(time.time())
+ 126:     c = norm_cls(cls)
+ 127:     if not c:
+ 128:         raise HTTPException(status_code=400, detail="Unknown class")
+ 129:     _insert_reading(RIVER_DBS[c], ts, d)
+ 130:     return {"ok": True, "ts": ts, "class": c}
+ 131: 
+ 132: # endpoint website ambil data
+ 133: @app.get("/api/data")
+ 134: def get_data(cls: str | None = None, limit: int = 20):
+ 135:     """
+ 136:     Ambil data sensor.
+ 137:     - Jika 'cls' diisi (buaran/cakung/cilliwung/kalimalang/sunter) -> ambil dari DB tersebut.
+ 138:     - Jika kosong -> gabungkan data terbaru dari semua DB dan urutkan DESC, batasi 'limit'.
+ 139:     """
+ 140:     def read_from(dbfile: str, lim: int):
+ 141:         conn = sqlite3.connect(dbfile)
+ 142:         cur = conn.cursor()
+ 143:         cur.execute(
+ 144:             "SELECT ts, voltage, temp, humid FROM sensor ORDER BY ts DESC LIMIT ?",
+ 145:             (lim,),
+ 146:         )
+ 147:         rows = cur.fetchall(); conn.close()
+ 148:         return rows
+ 149: 
+ 150:     c = norm_cls(cls) if cls else None
+ 151:     if c:
+ 152:         rows = read_from(RIVER_DBS[c], limit)
+ 153:         return [
+ 154:             {"ts": r[0], "voltage": r[1], "temp": r[2], "humid": r[3], "class": c}
+ 155:             for r in rows
+ 156:         ]
+ 157: 
+ 158:     # gabungkan dari semua DB
+ 159:     combined = []
+ 160:     for cname, dbfile in RIVER_DBS.items():
+ 161:         for r in read_from(dbfile, limit):
+ 162:             combined.append((r[0], r[1], r[2], r[3], cname))
+ 163:     combined.sort(key=lambda x: x[0], reverse=True)
+ 164:     combined = combined[:limit]
+ 165:     return [
+ 166:         {"ts": r[0], "voltage": r[1], "temp": r[2], "humid": r[3], "class": r[4]}
+ 167:         for r in combined
+ 168:     ]
+ 169: 
+ 170: def ensure_tables():
+ 171:     conn = sqlite3.connect(DB)
+ 172:     cur = conn.cursor()
+ 173:     cur.execute("""CREATE TABLE IF NOT EXISTS prediction(
+ 174:         id INTEGER PRIMARY KEY AUTOINCREMENT,
+ 175:         ts INTEGER NOT NULL,
+ 176:         text TEXT
+ 177:     )""")
+ 178:     conn.commit(); conn.close()
+ 179: ensure_tables()
+ 180: 
+ 181: def db(query, params=(), fetch=False):
+ 182:     conn = sqlite3.connect(DB)
+ 183:     cur = conn.cursor()
+ 184:     cur.execute(query, params)
+ 185:     out = cur.fetchall() if fetch else None
+ 186:     conn.commit(); conn.close()
+ 187:     return out
+ 188: 
+ 189: # Simple demo login to support Volt frontend
+ 190: @app.post("/auth/login")
+ 191: def auth_login(payload: dict):
+ 192:     user = payload.get("username")
+ 193:     pwd = payload.get("password")
+ 194:     if user == "galapaksi81" and pwd == "123":
+ 195:         return {"user": {"username": user}}
+ 196:     raise HTTPException(status_code=401, detail="Login gagal")
+ 197: 
+ 198: @app.get("/get/response")
+ 199: def get_response():
+ 200:     if not gmodel:
+ 201:         return {"ok": False, "error": "Set GEMINI_API_KEY in environment first."}
+ 202: 
+ 203:     # ambil 12 data terakhir (≈1 menit kalau kirim tiap 5 detik)
+ 204:     rows = db("SELECT ts, voltage, temp, humid FROM sensor ORDER BY ts DESC LIMIT 12", fetch=True)
+ 205:     if not rows:
+ 206:         return {"ok": False, "error": "No sensor data yet."}
+ 207:     rows = rows[::-1]  # urut lama→baru
+ 208: 
+ 209:     prompt = f"""
+ 210:     You are an IoT time-series assistant. Given recent (ts, voltage, temp, humid) rows:
+ 211:     {json.dumps(rows)}
+ 212:     Return a concise JSON with keys:
+ 213:       - description: short textual analysis (<=2 sentences)
+ 214:       - next_voltage: numeric prediction 1 minute ahead
+ 215:       - confidence: low/medium/high
+ 216:     Only return JSON.
+ 217:     """
+ 218: 
+ 219:     resp = gmodel.generate_content(prompt)
+ 220:     text = resp.text.strip()
+ 221: 
+ 222:     # simpan ke DB sebagai teks mentah (bisa JSON)
+ 223:     db("INSERT INTO prediction(ts, text) VALUES(?, ?)", (int(time.time()), text))
+ 224:     return {"ok": True, "prediction": text}
+ 225: 
+ 226: @app.get("/api/prediction/latest")
+ 227: def latest_prediction():
+ 228:     row = db("SELECT ts, text FROM prediction ORDER BY ts DESC LIMIT 1", fetch=True)
+ 229:     if not row:
+ 230:         return {"ok": False, "error": "No prediction yet."}
+ 231:     ts, text = row[0]
+ 232:     # coba parse JSON; kalau gagal, kirim sebagai plain text
+ 233:     try:
+ 234:         parsed = json.loads(text)
+ 235:         return {"ok": True, "ts": ts, "data": parsed}
+ 236:     except Exception:
+ 237:         return {"ok": True, "ts": ts, "text": text}
+ 238: 
+ 239: 
+ 240: # Endpoint sederhana untuk memicu popup notifikasi di dashboard
+ 241: @app.get("/notify")
+ 242: def notify(msg: str | None = None):
+ 243:     """
+ 244:     Arahkan ke /vol/dashboard.html dengan query ?notif=...
+ 245:     Contoh:
+ 246:       - /notify            -> tampilkan pesan default
+ 247:       - /notify?msg=Halo   -> tampilkan pesan kustom
+ 248:     """
+ 249:     target = "/vol/dashboard.html"
+ 250:     if msg:
+ 251:         target += f"?notif={quote(msg)}"
+ 252:     else:
+ 253:         target += "?notif=1"
+ 254:     return RedirectResponse(url=target)
